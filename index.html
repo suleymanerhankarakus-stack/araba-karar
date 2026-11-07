@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Araba Karar</title>
-<meta name="description" content="İkinci el araba adaylarını önceliklerine göre karşılaştır: güvenlik kontrolü, AHP ve TOPSIS ile sıralama.">
+<meta name="description" content="İkinci el araba adaylarını önceliklerine göre karşılaştır: güvenlik kontrolü ve TOPSIS ile sıralama.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -58,6 +58,7 @@
   .ana-btn:disabled { background: #8E99A3; cursor: not-allowed; }
   .sari-btn { background: var(--sari); color: var(--koyu); }
   .cerceve-btn { min-height: 54px; background: transparent; border: 2px solid var(--koyu); border-radius: 6px; font-size: 16px; font-weight: 700; }
+  .cerceve-btn:disabled { opacity: .3; cursor: not-allowed; }
   .link-btn { background: transparent; border: 0; text-decoration: underline; font-weight: 600; min-height: 44px; padding: 0 4px; }
   .iki-btn { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 8px; }
   .secenek { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 8px 14px; text-align: left; background: var(--beyaz); border: 1px solid var(--cizgi); border-radius: 8px; }
@@ -248,9 +249,6 @@ const KRITER = Object.fromEntries(KRITERLER.map(k => [k.id, k]));
 const MAKS_KRITER = 6;
 const BU_YIL = new Date().getFullYear();
 
-/* AHP cevap ölçeği: soldaki kriterin sağdakine göre önemi */
-const OLCEK = [5, 3, 1, 1/3, 1/5];
-const RI = { 1: 0, 2: 0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24 };
 
 /* =========================================================
    3) DURUM (tarayıcıda saklanır, sayfa yenilenince kaybolmaz)
@@ -264,16 +262,20 @@ function bosDurum() {
              elleAd: "", elleYil: "", elleYakit: "Benzin", elleHp: "", elleTuketim: "", elleKasa: "Hatchback", elleSeviye: 3 },
     aktifArac: 0,
     kriterler: [],
-    cevaplar: {},
-    soru: 0,
-    agirlikEkrani: false,
+    siralama: [],
     yakit: { ...YAKIT_VARSAYILAN },
     hata: ""
   };
 }
 let D;
 try { D = JSON.parse(localStorage.getItem(ANAHTAR)) || bosDurum(); } catch (e) { D = bosDurum(); }
+if (!Array.isArray(D.siralama)) D.siralama = [];
 function kaydet() { try { localStorage.setItem(ANAHTAR, JSON.stringify(D)); } catch (e) {} }
+/* Sıralamayı seçili kriterlerle eşle: kalanların sırası korunur, yeniler sona eklenir */
+function siralamaEsle() {
+  D.siralama = D.siralama.filter(k => D.kriterler.includes(k));
+  D.kriterler.forEach(k => { if (!D.siralama.includes(k)) D.siralama.push(k); });
+}
 
 /* =========================================================
    4) HESAPLAMA FONKSİYONLARI
@@ -325,33 +327,13 @@ function guvenlik(a) {
 }
 const DURUM_AD = { gecti: "Geçti", kaldi: "Kaldı", dogrulanmadi: "Doğrulanmadı" };
 
-function ciftler(n) {
-  const l = [];
-  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) l.push([i, j]);
-  return l;
-}
-/* AHP: geometrik ortalama ile ağırlık + tutarlılık oranı */
-function ahp(kriterler, cevaplar) {
-  const n = kriterler.length;
-  const M = Array.from({ length: n }, () => Array(n).fill(1));
-  ciftler(n).forEach(([i, j]) => {
-    const c = cevaplar[kriterler[i] + "|" + kriterler[j]];
-    const v = (c === undefined) ? 1 : OLCEK[c];
-    M[i][j] = v; M[j][i] = 1 / v;
-  });
-  const gm = M.map(r => Math.pow(r.reduce((s, x) => s * x, 1), 1 / n));
-  const top = gm.reduce((s, x) => s + x, 0);
-  const w = gm.map(x => x / top);
-  let lambda = 0;
-  for (let i = 0; i < n; i++) {
-    let s = 0;
-    for (let j = 0; j < n; j++) s += M[i][j] * w[j];
-    lambda += s / w[i];
-  }
-  lambda /= n;
-  const CI = n > 2 ? (lambda - n) / (n - 1) : 0;
-  const CR = RI[n] ? CI / RI[n] : 0;
-  return { w, CR };
+/* Sıra toplamı yöntemi: n kriterde 1. sıra n puan, son sıra 1 puan alır.
+   Ağırlık = puan / puanların toplamı. Dönen dizi D.kriterler sırasındadır. */
+function agirliklar() {
+  siralamaEsle();
+  const n = D.siralama.length;
+  const toplam = n * (n + 1) / 2;
+  return D.kriterler.map(k => (n - D.siralama.indexOf(k)) / toplam);
 }
 /* TOPSIS: vektör normalizasyonu, ideal ve negatif ideal çözüme uzaklık */
 function topsis(araclar, kriterler, w) {
@@ -416,7 +398,7 @@ function ekranKarsilama() {
   const adimlar = [
     ["Araçları seç", "Marka, model, yıl, motor ve paket"],
     ["Güvenlik kontrolünü yap", "Ağır hasar, taşıyıcı aksam ve airbag"],
-    ["Önceliklerini belirle", "En fazla 6 kriter seç ve karşılaştır"],
+    ["Önceliklerini belirle", "En fazla 6 kriter seç ve önem sırasına koy"],
     ["Sonucu gör", "Sıralama, gerekçe ve dikkat edilecekler"]
   ];
   const liste = adimlar.map((a, i) => `<div class="o">
@@ -564,62 +546,47 @@ function ekranKriterler() {
     const sec = D.kriterler.includes(k.id);
     return `<button type="button" class="kriter ${sec ? "secili" : ""}" aria-pressed="${sec}" data-is="kriter" data-id="${k.id}" ${!sec && dolu ? "disabled" : ""}><span>${k.ad}</span>${sec ? TIK_IKON : ""}</button>`;
   }).join("");
-  const soruSayisi = n * (n - 1) / 2;
   const hasarSayisi = ["hasar", "degisen", "boyali"].filter(x => D.kriterler.includes(x)).length;
   return ust(4) + `<main>
     <h1>Senin için ne önemli?</h1>
-    <div class="sayac bosluk"><span>${n} / ${MAKS_KRITER} kriter seçildi</span><span>${soruSayisi} soru</span></div>
+    <div class="sayac bosluk"><span>${n} / ${MAKS_KRITER} kriter seçildi</span></div>
     <div class="yigin" style="margin-top:12px">${liste}</div>
     ${dolu ? '<p class="kucuk">Başka bir kriter seçmek için önce birini kaldır.</p>' : ""}
     ${hasarSayisi >= 2 ? `<div class="uyari bosluk">${UYARI_IKON}<div>Hasar kaydı, değişen ve boyalı parça çoğu zaman aynı kazayı ölçer. Birlikte seçince hasar geçmişinin etkisi artar.</div></div>` : ""}
     <div class="alt-bolum">
-      <button type="button" class="ana-btn" data-is="kriterBitti" ${n < 2 ? "disabled" : ""}>Karşılaştırmaya geç</button>
+      <button type="button" class="ana-btn" data-is="kriterBitti" ${n < 2 ? "disabled" : ""}>Sıralamaya geç</button>
       ${n < 2 ? '<p class="kucuk" style="text-align:center">En az 2 kriter seç.</p>' : ""}
     </div>
   </main>`;
 }
 
-function ekranKarsilastirma() {
-  const C = ciftler(D.kriterler.length);
-  if (D.agirlikEkrani || C.length === 0) return ekranAgirliklar();
-  if (D.soru >= C.length) D.soru = C.length - 1;
-  const [i, j] = C[D.soru];
-  const a = KRITER[D.kriterler[i]].ad, b = KRITER[D.kriterler[j]].ad;
-  const anahtar = D.kriterler[i] + "|" + D.kriterler[j];
-  const cevap = D.cevaplar[anahtar];
-  const secenekler = [`${a} çok daha önemli`, `${a} daha önemli`, "İkisi eşit", `${b} daha önemli`, `${b} çok daha önemli`];
+const OK_YUKARI = '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m6 15 6-6 6 6"/></svg>';
+const OK_ASAGI = '<svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m6 9 6 6 6-6"/></svg>';
+function ekranSiralama() {
+  const w = agirliklar();
+  const n = D.siralama.length;
+  const satirlar = D.siralama.map((k, r) => {
+    const yuzde = Math.round(w[D.kriterler.indexOf(k)] * 100);
+    const ad = KRITER[k].ad;
+    return `<div class="kart" style="padding:10px 10px 10px 14px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--koyu);color:var(--beyaz);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">${r + 1}</div>
+        <div style="flex-grow:1;min-width:0">
+          <div class="cubuk-satir"><span style="font-weight:700">${ad}</span><span style="font-weight:700">%${yuzde}</span></div>
+          <div class="cubuk sari" aria-hidden="true"><div style="width:${yuzde}%"></div></div>
+        </div>
+        <button type="button" class="cerceve-btn" style="min-height:44px;width:44px;padding:0;display:flex;align-items:center;justify-content:center;border-width:1px" data-is="yukari" data-r="${r}" ${r === 0 ? "disabled" : ""} aria-label="${ad} yukarı taşı">${OK_YUKARI}</button>
+        <button type="button" class="cerceve-btn" style="min-height:44px;width:44px;padding:0;display:flex;align-items:center;justify-content:center;border-width:1px" data-is="asagi" data-r="${r}" ${r === n - 1 ? "disabled" : ""} aria-label="${ad} aşağı taşı">${OK_ASAGI}</button>
+      </div>
+    </div>`;
+  }).join("");
   return ust(5) + `<main>
-    <div style="font-size:15px;font-weight:600;color:var(--gri)">Soru ${D.soru + 1} / ${C.length}</div>
-    <h1 style="margin-top:4px">Hangisi senin için daha önemli?</h1>
-    <div class="karsi"><div class="kutu">${a}</div><span>ile</span><div class="kutu">${b}</div></div>
-    <div class="yigin" style="margin-top:20px">
-      ${secenekler.map((t, k) => `<button type="button" class="secenek ${cevap === k ? "secili" : ""}" aria-pressed="${cevap === k}" data-is="cevap" data-k="${k}" data-anahtar="${anahtar}">${t}</button>`).join("")}
-    </div>
+    <h1>Önem sırasını belirle</h1>
+    <p class="alt">En önemli kriteri en üste taşı. Yüzdeler, kriterin sonuca etkisini gösterir.</p>
+    <div class="yigin bosluk">${satirlar}</div>
+    <p class="kucuk bosluk">Ağırlıklar sıra toplamı yöntemiyle hesaplanır: ${n} kriterde 1. sıra ${n} puan, son sıra 1 puan alır.</p>
     <div class="alt-bolum iki-btn">
-      <button type="button" class="cerceve-btn" data-is="soruGeri">Geri</button>
-      <button type="button" class="ana-btn" data-is="soruIleri" ${cevap === undefined ? "disabled" : ""}>${D.soru === C.length - 1 ? "Ağırlıkları gör" : "Sonraki soru"}</button>
-    </div>
-  </main>`;
-}
-
-function ekranAgirliklar() {
-  const { w, CR } = ahp(D.kriterler, D.cevaplar);
-  const sira = D.kriterler.map((k, i) => ({ k, w: w[i] })).sort((x, y) => y.w - x.w);
-  const enB = sira[0].w;
-  const satirlar = sira.map(x => `<div>
-      <div class="cubuk-satir"><span style="font-weight:600">${KRITER[x.k].ad}</span><span style="font-weight:700">%${Math.round(x.w * 100)}</span></div>
-      <div class="cubuk sari" aria-hidden="true"><div style="width:${(x.w / enB) * 100}%"></div></div>
-    </div>`).join("");
-  const tutarli = CR <= 0.10;
-  return ust(5) + `<main>
-    <h1>Önceliklerin</h1>
-    <p class="alt">Cevaplarından çıkan kriter ağırlıkları (AHP).</p>
-    <section class="kart bosluk yigin" style="gap:12px">${satirlar}</section>
-    ${D.kriterler.length > 2 ? (tutarli
-      ? `<div class="uyari yesil bosluk">${TIK_IKON}<div><strong>Cevapların tutarlı.</strong> Tutarlılık oranı: ${CR.toFixed(2).replace(".", ",")} (0,10 altı iyi)</div></div>`
-      : `<div class="uyari bosluk">${UYARI_IKON}<div><strong>Cevapların birbiriyle çelişiyor olabilir.</strong> Tutarlılık oranı ${CR.toFixed(2).replace(".", ",")}, 0,10'un üstünde. Soruları gözden geçirmeni öneririm.</div></div>`) : ""}
-    <div class="alt-bolum iki-btn">
-      <button type="button" class="cerceve-btn" data-is="sorulara">Sorular</button>
+      <button type="button" class="cerceve-btn" data-is="git" data-adim="4">Geri</button>
       <button type="button" class="ana-btn" data-is="git" data-adim="6">Veri girişine geç</button>
     </div>
   </main>`;
@@ -723,7 +690,7 @@ function siraListesi(sonuc, sari, rozetli) {
   }).join("");
 }
 function ekranSonuc() {
-  const { w } = ahp(D.kriterler, D.cevaplar);
+  const w = agirliklar();
   const tum = topsis(D.araclar, D.kriterler, w);
   const guvenli = D.araclar.filter(a => guvenlik(a) === "gecti");
   const guvenliSonuc = guvenli.length >= 2 ? topsis(guvenli, D.kriterler, w) : null;
@@ -803,7 +770,7 @@ function ekranSonuc() {
 /* =========================================================
    7) ÇİZİM VE OLAYLAR
    ========================================================= */
-const EKRANLAR = [ekranKarsilama, ekranSecim, ekranAdaylar, ekranGuvenlik, ekranKriterler, ekranKarsilastirma, ekranVeri, ekranSonuc];
+const EKRANLAR = [ekranKarsilama, ekranSecim, ekranAdaylar, ekranGuvenlik, ekranKriterler, ekranSiralama, ekranVeri, ekranSonuc];
 const kok = document.getElementById("uygulama");
 function ciz(yukari) {
   kok.innerHTML = EKRANLAR[D.adim]();
@@ -815,7 +782,7 @@ function git(adim) {
   if (adim >= 3 && D.araclar.length < 2) adim = D.araclar.length ? 2 : 1;
   if (adim >= 4 && !D.araclar.every(a => a.agir && a.tasiyici)) adim = 3;
   if (adim >= 5 && D.kriterler.length < 2) adim = 4;
-  if (adim === 5) { D.agirlikEkrani = false; D.soru = 0; }
+  if (adim >= 5) siralamaEsle();
   if (adim === 3 || adim === 6) D.aktifArac = 0;
   D.adim = adim; D.hata = "";
   ciz(true);
@@ -907,16 +874,18 @@ kok.addEventListener("click", e => {
       return ciz();
     }
     case "kriterBitti": return git(5);
-    case "cevap": D.cevaplar[b.dataset.anahtar] = Number(b.dataset.k); return ciz();
-    case "soruGeri":
-      if (D.soru > 0) { D.soru--; return ciz(true); }
-      return git(4);
-    case "soruIleri": {
-      const C = ciftler(D.kriterler.length);
-      if (D.soru < C.length - 1) D.soru++; else D.agirlikEkrani = true;
-      return ciz(true);
+    case "yukari":
+    case "asagi": {
+      const r = Number(b.dataset.r);
+      const h = is === "yukari" ? r - 1 : r + 1;
+      if (h < 0 || h >= D.siralama.length) return;
+      [D.siralama[r], D.siralama[h]] = [D.siralama[h], D.siralama[r]];
+      ciz();
+      // Odağı taşınan kriterin aynı yöndeki düğmesinde tut
+      const yeni = kok.querySelector(`[data-is="${is}"][data-r="${h}"]`) || kok.querySelector(`[data-r="${h}"]`);
+      if (yeni) yeni.focus();
+      return;
     }
-    case "sorulara": D.agirlikEkrani = false; D.soru = 0; return ciz(true);
     case "hesapla": return hesapla();
     case "yazdir": return window.print();
   }
