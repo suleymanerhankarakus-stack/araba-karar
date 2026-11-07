@@ -136,97 +136,34 @@
 <body>
 <div class="kap" id="uygulama"></div>
 
+<script src="katalog.js"></script>
 <script>
 /* =========================================================
-   1) ARAÇ KATALOĞU (deneme sürümü)
-   Değerler yaklaşık fabrika verileridir; kullanıcı her birini
-   veri girişi ekranında değiştirebilir. Yeni araç eklemek için
-   bu listeye aynı biçimde satır eklemek yeterli.
-   seviye: 1 = giriş paketi, 3 = orta paket, 5 = en üst paket
-   satis: aracın ileride ne kadar kolay satılacağı (1-5, tahmini)
+   1) ARAÇ KATALOĞU
+   katalog.js dosyasından gelir (kaynak: TSB Kasko Değer Listesi).
+   Versiyon kaydı: [ad, HP (0 = bilinmiyor), yakıt, vites, kasa, paket seviyesi, ilk yıl, [kasko değerleri, bin TL]]
    ========================================================= */
-const KATALOG = {
-  "Renault": {
-    "Clio": { kasa: "Hatchback", satis: 5, yillar: [2020, 2025],
-      motorlar: [
-        { ad: "1.0 SCe 65 HP", yakit: "Benzin", hp: 65, tuketim: 5.4, vites: "Manuel" },
-        { ad: "1.0 TCe 90 HP", yakit: "Benzin", hp: 90, tuketim: 5.0, vites: "Manuel" },
-        { ad: "1.0 TCe 90 HP X-Tronic", yakit: "Benzin", hp: 90, tuketim: 5.6, vites: "Otomatik" }
-      ],
-      paketler: [ { ad: "Joy", seviye: 1 }, { ad: "Touch", seviye: 3 }, { ad: "Icon", seviye: 5 } ] },
-    "Megane Sedan": { kasa: "Sedan", satis: 4, yillar: [2017, 2024],
-      motorlar: [
-        { ad: "1.3 TCe 140 HP EDC", yakit: "Benzin", hp: 140, tuketim: 5.9, vites: "Otomatik" },
-        { ad: "1.5 Blue dCi 115 HP EDC", yakit: "Dizel", hp: 115, tuketim: 4.4, vites: "Otomatik" }
-      ],
-      paketler: [ { ad: "Joy", seviye: 1 }, { ad: "Touch", seviye: 3 }, { ad: "Icon", seviye: 5 } ] }
-  },
-  "Fiat": {
-    "Egea Sedan": { kasa: "Sedan", satis: 5, yillar: [2016, 2025],
-      motorlar: [
-        { ad: "1.4 Fire 95 HP", yakit: "Benzin", hp: 95, tuketim: 6.0, vites: "Manuel" },
-        { ad: "1.3 Multijet 95 HP", yakit: "Dizel", hp: 95, tuketim: 4.0, vites: "Manuel" },
-        { ad: "1.6 Multijet 130 HP DCT", yakit: "Dizel", hp: 130, tuketim: 4.3, vites: "Otomatik" }
-      ],
-      paketler: [ { ad: "Easy", seviye: 1 }, { ad: "Urban", seviye: 3 }, { ad: "Lounge", seviye: 5 } ] }
-  },
-  "Ford": {
-    "Focus": { kasa: "Hatchback", satis: 4, yillar: [2019, 2024],
-      motorlar: [
-        { ad: "1.0 EcoBoost 125 HP", yakit: "Benzin", hp: 125, tuketim: 5.5, vites: "Manuel" },
-        { ad: "1.5 Ti-VCT 123 HP", yakit: "Benzin", hp: 123, tuketim: 6.4, vites: "Otomatik" },
-        { ad: "1.5 TDCi 120 HP", yakit: "Dizel", hp: 120, tuketim: 4.5, vites: "Otomatik" }
-      ],
-      paketler: [ { ad: "Trend X", seviye: 1 }, { ad: "Titanium", seviye: 3 }, { ad: "ST-Line", seviye: 4 }, { ad: "Vignale", seviye: 5 } ] }
-  },
-  "Volkswagen": {
-    "Golf": { kasa: "Hatchback", satis: 4, yillar: [2017, 2024],
-      motorlar: [
-        { ad: "1.0 TSI 110 HP DSG", yakit: "Benzin", hp: 110, tuketim: 5.2, vites: "Otomatik" },
-        { ad: "1.5 TSI 150 HP DSG", yakit: "Benzin", hp: 150, tuketim: 5.8, vites: "Otomatik" },
-        { ad: "1.6 TDI 115 HP DSG", yakit: "Dizel", hp: 115, tuketim: 4.3, vites: "Otomatik" }
-      ],
-      paketler: [ { ad: "Trendline / Life", seviye: 1 }, { ad: "Comfortline / Style", seviye: 3 }, { ad: "Highline / R-Line", seviye: 5 } ] }
-  },
-  "Toyota": {
-    "Corolla Sedan": { kasa: "Sedan", satis: 5, yillar: [2019, 2025],
-      motorlar: [
-        { ad: "1.5 125 HP Multidrive S", yakit: "Benzin", hp: 125, tuketim: 6.0, vites: "Otomatik" },
-        { ad: "1.8 Hybrid 122 HP", yakit: "Hibrit", hp: 122, tuketim: 4.5, vites: "Otomatik" }
-      ],
-      paketler: [ { ad: "Vision", seviye: 1 }, { ad: "Dream", seviye: 3 }, { ad: "Flame / Passion", seviye: 5 } ] }
-  },
-  "Hyundai": {
-    "i20": { kasa: "Hatchback", satis: 4, yillar: [2020, 2025],
-      motorlar: [
-        { ad: "1.4 MPI 100 HP", yakit: "Benzin", hp: 100, tuketim: 6.0, vites: "Otomatik" },
-        { ad: "1.0 T-GDI 100 HP DCT", yakit: "Benzin", hp: 100, tuketim: 5.3, vites: "Otomatik" }
-      ],
-      paketler: [ { ad: "Jump", seviye: 1 }, { ad: "Style", seviye: 3 }, { ad: "Elite", seviye: 5 } ] }
-  },
-  "Dacia": {
-    "Duster": { kasa: "SUV", satis: 4, yillar: [2018, 2024],
-      motorlar: [
-        { ad: "1.5 Blue dCi 115 HP", yakit: "Dizel", hp: 115, tuketim: 4.5, vites: "Manuel" },
-        { ad: "1.3 TCe 150 HP EDC", yakit: "Benzin", hp: 150, tuketim: 6.3, vites: "Otomatik" }
-      ],
-      paketler: [ { ad: "Essential", seviye: 1 }, { ad: "Comfort", seviye: 3 }, { ad: "Prestige", seviye: 5 } ] }
-  },
-  "Peugeot": {
-    "3008": { kasa: "SUV", satis: 3, yillar: [2017, 2024],
-      motorlar: [
-        { ad: "1.2 PureTech 130 HP EAT8", yakit: "Benzin", hp: 130, tuketim: 5.6, vites: "Otomatik" },
-        { ad: "1.5 BlueHDi 130 HP EAT8", yakit: "Dizel", hp: 130, tuketim: 4.6, vites: "Otomatik" }
-      ],
-      paketler: [ { ad: "Active", seviye: 1 }, { ad: "Allure", seviye: 3 }, { ad: "GT", seviye: 5 } ] }
-  }
-};
+const KASA_AD = { H: "Hatchback", S: "Sedan", W: "Station Wagon", U: "SUV", C: "Crossover", M: "MPV", P: "Coupe", B: "Cabrio", T: "Hafif Ticari", K: "Pick-up" };
+const YAKIT_AD = { B: "Benzin", D: "Dizel", H: "Hibrit", E: "Elektrik", L: "LPG" };
+const VITES_AD = { O: "Otomatik", M: "Manuel", "": "" };
+const KATALOG_VAR = typeof KATALOG !== "undefined";
+function markalar() { return KATALOG_VAR ? Object.keys(KATALOG).sort((a, b) => a.localeCompare(b, "tr")) : []; }
+function modeller(marka) { return marka && KATALOG[marka] ? Object.keys(KATALOG[marka]).sort((a, b) => a.localeCompare(b, "tr", { numeric: true })) : []; }
+function versiyonDegeri(v, yil) { const i = yil - v[6]; return (i >= 0 && i < v[7].length) ? v[7][i] : 0; }
+function modelYillari(marka, model) {
+  const set = new Set();
+  KATALOG[marka][model].v.forEach(v => v[7].forEach((d, i) => { if (d) set.add(v[6] + i); }));
+  return [...set].sort((a, b) => b - a);
+}
+function yilVersiyonlari(marka, model, yil) {
+  return KATALOG[marka][model].v.map((v, i) => ({ v, i })).filter(x => versiyonDegeri(x.v, yil) > 0);
+}
 
 /* Kasa tipine göre otomatik konfor puanı (1-5). Kullanıcı değiştirebilir. */
-const KONFOR = { "Hatchback": 2, "Sedan": 3, "Station Wagon": 3, "SUV": 5, "MPV": 4 };
+const KONFOR = { "Hatchback": 2, "Sedan": 3, "Station Wagon": 3, "Coupe": 2, "Cabrio": 2, "Crossover": 4, "SUV": 5, "MPV": 4, "Hafif Ticari": 2, "Pick-up": 3 };
 
-/* Yakıt fiyatları (TL/litre). Varsayılan: 2 Kasım 2026, İstanbul Avrupa yakası. */
-const YAKIT_VARSAYILAN = { benzin: 80.40, dizel: 100.50, lpg: 41.20 };
+/* Yakıt fiyatları (TL/litre, elektrik TL/kWh). Varsayılan: 2 Kasım 2026, İstanbul Avrupa yakası. */
+const YAKIT_VARSAYILAN = { benzin: 80.40, dizel: 100.50, lpg: 41.20, elektrik: "" };
 
 /* =========================================================
    2) KRİTERLER
@@ -258,7 +195,7 @@ function bosDurum() {
   return {
     adim: 0,
     araclar: [],
-    secim: { marka: "", model: "", yil: "", motor: null, paket: null, elle: false,
+    secim: { marka: "", model: "", yil: "", versiyon: "", elle: false,
              elleAd: "", elleYil: "", elleYakit: "Benzin", elleHp: "", elleTuketim: "", elleKasa: "Hatchback", elleSeviye: 3 },
     aktifArac: 0,
     kriterler: [],
@@ -270,6 +207,8 @@ function bosDurum() {
 let D;
 try { D = JSON.parse(localStorage.getItem(ANAHTAR)) || bosDurum(); } catch (e) { D = bosDurum(); }
 if (!Array.isArray(D.siralama)) D.siralama = [];
+if (D.secim.versiyon === undefined) D.secim = { ...bosDurum().secim };
+D.yakit = { ...YAKIT_VARSAYILAN, ...D.yakit };
 function kaydet() { try { localStorage.setItem(ANAHTAR, JSON.stringify(D)); } catch (e) {} }
 /* Sıralamayı seçili kriterlerle eşle: kalanların sırası korunur, yeniler sona eklenir */
 function siralamaEsle() {
@@ -294,6 +233,7 @@ function sayi(v) {
 function yakitFiyati(tur) {
   if (tur === "Dizel") return sayi(D.yakit.dizel);
   if (tur === "LPG") return sayi(D.yakit.lpg);
+  if (tur === "Elektrik") return sayi(D.yakit.elektrik);
   return sayi(D.yakit.benzin); // Benzin ve Hibrit
 }
 function aracYasi(a) { return Math.max(0, BU_YIL - Number(a.yil)); }
@@ -427,10 +367,10 @@ function ekranSecim() {
       <label for="elleYil">Model yılı</label>
       <input id="elleYil" type="number" inputmode="numeric" data-alan="secim.elleYil" value="${esc(s.elleYil)}" placeholder="Örn. 2019">
       <label for="elleYakit">Yakıt türü</label>
-      <select id="elleYakit" data-alan="secim.elleYakit">${["Benzin", "Dizel", "Hibrit", "LPG"].map(y => `<option ${s.elleYakit === y ? "selected" : ""}>${y}</option>`).join("")}</select>
+      <select id="elleYakit" data-alan="secim.elleYakit">${["Benzin", "Dizel", "Hibrit", "LPG", "Elektrik"].map(y => `<option ${s.elleYakit === y ? "selected" : ""}>${y}</option>`).join("")}</select>
       <label for="elleHp">Motor gücü (HP)</label>
       <input id="elleHp" type="number" inputmode="numeric" data-alan="secim.elleHp" value="${esc(s.elleHp)}">
-      <label for="elleTuketim">Ortalama tüketim (L/100 km)</label>
+      <label for="elleTuketim">Ortalama tüketim (L/100 km, elektrikli için kWh/100 km, bilmiyorsan boş bırak)</label>
       <input id="elleTuketim" type="text" inputmode="decimal" data-alan="secim.elleTuketim" value="${esc(s.elleTuketim)}" placeholder="Örn. 5,5">
       <label for="elleKasa">Kasa tipi</label>
       <select id="elleKasa" data-alan="secim.elleKasa">${Object.keys(KONFOR).map(k => `<option ${s.elleKasa === k ? "selected" : ""}>${k}</option>`).join("")}</select>
@@ -438,27 +378,40 @@ function ekranSecim() {
       <select id="elleSeviye" data-alan="secim.elleSeviye">${[[1, "Giriş paketi"], [3, "Orta paket"], [5, "En üst paket"]].map(([v, t]) => `<option value="${v}" ${Number(s.elleSeviye) === v ? "selected" : ""}>${t}</option>`).join("")}</select>
     </div>`;
   } else {
-    const markalar = Object.keys(KATALOG);
-    const modeller = s.marka ? Object.keys(KATALOG[s.marka]) : [];
-    const m = s.marka && s.model ? KATALOG[s.marka][s.model] : null;
-    const yillar = [];
-    if (m) for (let y = m.yillar[1]; y >= m.yillar[0]; y--) yillar.push(y);
-    govde = `<div class="kart bosluk">
+    if (!KATALOG_VAR) {
+      govde = `<div class="uyari kirmizi bosluk">${UYARI_IKON}<div>Araç kataloğu yüklenemedi. Sayfayı yenile veya aracı elle gir.</div></div>`;
+    } else {
+      const mk = markalar();
+      const md = modeller(s.marka);
+      const varModel = s.marka && s.model && KATALOG[s.marka] && KATALOG[s.marka][s.model];
+      const yillar = varModel ? modelYillari(s.marka, s.model) : [];
+      const vs = varModel && s.yil ? yilVersiyonlari(s.marka, s.model, Number(s.yil)) : [];
+      govde = `<div class="kart bosluk">
       <label for="marka">Marka</label>
-      <select id="marka" data-secim="marka"><option value="">Seç</option>${markalar.map(x => `<option ${s.marka === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>
+      <select id="marka" data-secim="marka"><option value="">Seç</option>${mk.map(x => `<option ${s.marka === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>
       <label for="model">Model</label>
-      <select id="model" data-secim="model" ${s.marka ? "" : "disabled"}><option value="">Seç</option>${modeller.map(x => `<option ${s.model === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>
-      <label for="yil">Yıl</label>
-      <select id="yil" data-secim="yil" ${m ? "" : "disabled"}><option value="">Seç</option>${yillar.map(x => `<option ${String(s.yil) === String(x) ? "selected" : ""}>${x}</option>`).join("")}</select>
+      <select id="model" data-secim="model" ${s.marka ? "" : "disabled"}><option value="">Seç</option>${md.map(x => `<option ${s.model === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>
+      <label for="yil">Model yılı</label>
+      <select id="yil" data-secim="yil" ${varModel ? "" : "disabled"}><option value="">Seç</option>${yillar.map(x => `<option ${String(s.yil) === String(x) ? "selected" : ""}>${x}</option>`).join("")}</select>
+      <label for="versiyon">Versiyon (motor ve paket)</label>
+      <select id="versiyon" data-secim="versiyon" ${vs.length ? "" : "disabled"}><option value="">Seç</option>${vs.map(x => `<option value="${x.i}" ${String(s.versiyon) === String(x.i) ? "selected" : ""}>${esc(x.v[0])}</option>`).join("")}</select>
     </div>`;
-    if (m && s.yil) {
-      govde += `<h2 class="bosluk">Motor</h2><div class="yigin" style="margin-top:10px">` +
-        m.motorlar.map((mo, i) => `<button type="button" class="secenek ${s.motor === i ? "secili" : ""}" data-is="motor" data-i="${i}" aria-pressed="${s.motor === i}">
-          <span>${esc(mo.ad)}<small>${mo.yakit}, ${mo.vites}, ${mo.hp} HP</small></span>${s.motor === i ? TIK_IKON : ""}</button>`).join("") + `</div>`;
-    }
-    if (m && s.yil && s.motor !== null) {
-      govde += `<h2 class="bosluk">Paket</h2><div class="hap-sira" style="margin-top:10px">` +
-        m.paketler.map((p, i) => `<button type="button" class="hap ${s.paket === i ? "secili" : ""}" data-is="paket" data-i="${i}" aria-pressed="${s.paket === i}">${esc(p.ad)}</button>`).join("") + `</div>`;
+      if (varModel && s.yil && s.versiyon !== "") {
+        const v = KATALOG[s.marka][s.model].v[Number(s.versiyon)];
+        if (v) {
+          const kasko = versiyonDegeri(v, Number(s.yil)) * 1000;
+          govde += `<section class="kart bosluk">
+        <h2>${esc(s.marka)} ${esc(s.model)}, ${esc(s.yil)}</h2>
+        <div style="font-size:14px;color:var(--gri-koyu);margin-top:2px">${esc(v[0])}</div>
+        <div class="satir" style="margin-top:6px"><span>Yakıt</span><strong>${YAKIT_AD[v[2]]}</strong></div>
+        <div class="satir"><span>Vites</span><strong>${VITES_AD[v[3]] || "Belirtilmemiş"}</strong></div>
+        <div class="satir"><span>Kasa</span><strong>${KASA_AD[v[4]]}</strong></div>
+        <div class="satir"><span>Motor gücü</span><strong>${v[1] ? v[1] + " HP" : "Bilinmiyor"}</strong></div>
+        <div class="satir"><span>Kasko değeri</span><strong>${tl(kasko)} TL</strong></div>
+      </section>`;
+        }
+      }
+      govde += `<p class="kucuk" style="margin:8px 0 0">Araç listesi: ${esc(KATALOG_KAYNAK)}. 2012 öncesi araçlar için elle giriş yap.</p>`;
     }
   }
   const eklenenler = D.araclar.length ? `<p class="kucuk bosluk">Eklenen araçlar: ${D.araclar.map(a => esc(aracAdi(a))).join(", ")}</p>` : "";
@@ -482,16 +435,16 @@ function ekranAdaylar() {
         <h2 style="font-size:17px">${esc(aracAdi(a))}</h2>
         <button type="button" class="link-btn" data-is="aracSil" data-id="${a.id}" aria-label="${esc(aracAdi(a))} aracını çıkar">Çıkar</button>
       </div>
-      <div style="font-size:14px;color:var(--gri-koyu)">${esc(a.yil)} · ${esc(a.motor)} · ${esc(a.paket)}</div>
-      <div style="margin-top:4px;font-size:14px;color:var(--gri)">${esc(a.yakit)} · ${esc(a.vites || "-")} · ${esc(a.kasa)} · ${esc(a.hp)} HP · ${esc(String(a.tuketim).replace(".", ","))} L/100 km</div>
+      <div style="font-size:14px;color:var(--gri-koyu)">${esc(a.yil)} · ${esc(a.motor)}</div>
+      <div style="margin-top:4px;font-size:14px;color:var(--gri)">${[a.yakit, a.vites, a.kasa, a.hp ? a.hp + " HP" : "HP bilinmiyor"].filter(Boolean).map(esc).join(" · ")}</div>
     </article>`).join("");
   return ust(2) + `<main>
     <h1>Adayların</h1>
-    <p class="alt">Teknik bilgiler otomatik geldi. Yanlış olanları veri girişi adımında düzeltebilirsin.</p>
+    <p class="alt">Bilgiler TSB kasko listesindeki versiyon adından alındı. Yanlış olanları veri girişi adımında düzeltebilirsin.</p>
     <div class="yigin bosluk">${kartlar || '<p class="kucuk">Henüz araç eklemedin.</p>'}</div>
     <button type="button" class="cerceve-btn bosluk" style="border-style:dashed;border-color:var(--gri)" data-is="git" data-adim="1">Araç ekle</button>
     <div class="alt-bolum">
-      <p class="kucuk" style="text-align:center;margin:0 0 10px">Tüketim değerleri yaklaşık fabrika verisidir.</p>
+      <p class="kucuk" style="text-align:center;margin:0 0 10px">Eksik bilgileri veri girişi adımında tamamlayacaksın.</p>
       <button type="button" class="ana-btn" data-is="git" data-adim="3" ${D.araclar.length < 2 ? "disabled" : ""}>Güvenlik kontrolüne geç</button>
       ${D.araclar.length < 2 ? '<p class="kucuk" style="text-align:center">Devam etmek için en az 2 araç ekle.</p>' : ""}
     </div>
@@ -611,7 +564,10 @@ function ekranVeri() {
   const k = D.kriterler;
   const sekmeler = D.araclar.map((x, i) => `<button type="button" class="sekme ${i === D.aktifArac ? "aktif" : ""}" data-is="aktif" data-i="${i}">${esc(kisaAd(x))}</button>`).join("");
   let kullanici = "";
-  if (k.includes("fiyat")) kullanici += alan(a, "fiyat", "Fiyat (TL)", "Örn. 1.250.000");
+  if (k.includes("fiyat")) {
+    kullanici += alan(a, "fiyat", "Fiyat (TL)", "Örn. 1.250.000");
+    if (a.kasko) kullanici += `<p class="kucuk" style="margin:6px 0 0">TSB kasko değeri: <strong>${tl(a.kasko)} TL</strong> <button type="button" class="link-btn" style="min-height:36px;font-size:13px" data-is="kaskoYaz">Fiyat olarak yaz</button></p>`;
+  }
   kullanici += alan(a, "km", "Kilometre" + (k.includes("km") ? "" : " (isteğe bağlı)"), "Örn. 85.000");
   kullanici += `<div id="ykNot">${ykNotu(a)}</div>`;
   if (k.includes("hasar")) kullanici += alan(a, "hasar", "Hasar kaydı (TL, yoksa 0)", "0");
@@ -619,20 +575,23 @@ function ekranVeri() {
   if (k.includes("boyali")) kullanici += alan(a, "boyali", "Boyalı parça sayısı", "0");
 
   let otomatik = "";
-  if (k.includes("yakit")) otomatik += alan(a, "tuketim", `Ortalama tüketim (L/100 km, ${esc(a.yakit)})`, "", "decimal");
-  if (k.includes("hp")) otomatik += alan(a, "hp", "Motor gücü (HP)");
+  if (k.includes("yakit")) {
+    otomatik += alan(a, "tuketim", `Ortalama tüketim (${a.yakit === "Elektrik" ? "kWh" : "L"}/100 km, ${esc(a.yakit)})`, a.yakit === "Elektrik" ? "Örn. 16" : "Örn. 5,5", "decimal");
+    if (a.tuketim === "" || a.tuketim === null) otomatik += `<p class="kucuk" style="margin:6px 0 0">Bu bilgi katalogda yok. İlandan, üreticinin teknik broşüründen veya satıcıdan öğrenebilirsin.</p>`;
+  }
+  if (k.includes("hp")) otomatik += alan(a, "hp", "Motor gücü (HP)" + (a.hp ? "" : " — katalogda yok, ilandan bak"));
   if (k.includes("konfor")) otomatik += alan(a, "konfor", `Konfor puanı (1-5, ${esc(a.kasa)})`);
-  if (k.includes("paket")) otomatik += alan(a, "seviye", `Paket seviyesi (1-5, ${esc(a.paket)})`);
-  if (k.includes("satis")) otomatik += alan(a, "satis", "Satış piyasası (1-5, tahmini)");
+  if (k.includes("paket")) otomatik += alan(a, "seviye", `Paket seviyesi (1-5${a.paket ? ", " + esc(a.paket) : ", kasko değerine göre tahmini"})`);
+  if (k.includes("satis")) otomatik += alan(a, "satis", "Satış piyasası (1-5, değer korumasına göre tahmini)");
   if (k.includes("yas")) otomatik += `<p class="kucuk" style="margin-top:12px">Yaş: ${aracYasi(a)} (model yılından hesaplandı)</p>`;
 
   let yakitKart = "";
   if (k.includes("yakit")) {
     yakitKart = `<section class="kart bosluk">
-      <h2>Yakıt fiyatları (TL/litre)</h2>
-      <p class="kucuk" style="margin:4px 0 0">Varsayılan: 2 Kasım 2026, İstanbul. Kendi şehrindeki güncel fiyatı yaz.</p>
-      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
-        ${[["benzin", "Benzin"], ["dizel", "Dizel"], ["lpg", "LPG"]].map(([id, t]) => `<div><label for="y${id}">${t}</label><input id="y${id}" type="text" inputmode="decimal" data-yakit="${id}" value="${esc(String(D.yakit[id]).replace(".", ","))}"></div>`).join("")}
+      <h2>Yakıt fiyatları</h2>
+      <p class="kucuk" style="margin:4px 0 0">TL/litre, elektrik TL/kWh. Varsayılan: 2 Kasım 2026, İstanbul. Kendi şehrindeki güncel fiyatı yaz.</p>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 8px">
+        ${[["benzin", "Benzin"], ["dizel", "Dizel"], ["lpg", "LPG"], ["elektrik", "Elektrik"]].map(([id, t]) => `<div><label for="y${id}">${t}</label><input id="y${id}" type="text" inputmode="decimal" data-yakit="${id}" value="${esc(String(D.yakit[id]).replace(".", ","))}"></div>`).join("")}
       </div>
     </section>`;
   }
@@ -747,7 +706,7 @@ function ekranSonuc() {
     <section class="kart bosluk">
       <h2>Tüm araçların sıralaması</h2>
       <div class="yigin" style="margin-top:10px;gap:10px">${siraListesi(tum, false, true)}</div>
-      ${guvenliSonuc ? `<h2 style="margin-top:18px">Sadece güvenlikten geçenler</h2><div class="yigin" style="margin-top:10px;gap:10px">${siraListesi(guvenliSonuc, true, false)}</div>` : ""}
+      ${guvenliSonuc && guvenli.length < D.araclar.length ? `<h2 style="margin-top:18px">Sadece güvenlikten geçenler</h2><div class="yigin" style="margin-top:10px;gap:10px">${siraListesi(guvenliSonuc, true, false)}</div>` : ""}
       <p class="kucuk" style="margin:10px 0 0">Puanlar 0 ile 1 arasındadır (TOPSIS). Karşılaştırılan araçlar değişince puanlar da değişir.</p>
     </section>
 
@@ -792,19 +751,20 @@ function aracEkle() {
   let a;
   if (s.elle) {
     const yil = sayi(s.elleYil), hp = sayi(s.elleHp), tuk = sayi(s.elleTuketim);
-    if (!s.elleAd.trim() || isNaN(yil) || yil < 1980 || yil > BU_YIL + 1 || isNaN(hp) || isNaN(tuk)) {
-      D.hata = "Marka/model, model yılı, motor gücü ve tüketim bilgilerini doldur."; return ciz();
+    if (!s.elleAd.trim() || isNaN(yil) || yil < 1980 || yil > BU_YIL + 1) {
+      D.hata = "Marka/model ve model yılı bilgilerini doldur."; return ciz();
     }
     const sev = Number(s.elleSeviye);
-    a = { marka: "", model: s.elleAd.trim(), yil, motor: "Elle girildi", yakit: s.elleYakit, hp, tuketim: tuk, vites: "",
+    a = { marka: "", model: s.elleAd.trim(), yil, motor: "Elle girildi", yakit: s.elleYakit, hp: isNaN(hp) ? "" : hp, tuketim: isNaN(tuk) ? "" : tuk, vites: "", kasko: 0,
           kasa: s.elleKasa, paket: sev === 1 ? "Giriş paketi" : sev === 5 ? "En üst paket" : "Orta paket", seviye: sev, satis: 3, konfor: KONFOR[s.elleKasa] };
   } else {
-    if (!s.marka || !s.model || !s.yil || s.motor === null || s.paket === null) {
-      D.hata = "Marka, model, yıl, motor ve paketi seç."; return ciz();
+    if (!KATALOG_VAR || !s.marka || !s.model || !s.yil || s.versiyon === "") {
+      D.hata = "Marka, model, yıl ve versiyonu seç."; return ciz();
     }
-    const m = KATALOG[s.marka][s.model], mo = m.motorlar[s.motor], p = m.paketler[s.paket];
-    a = { marka: s.marka, model: s.model, yil: Number(s.yil), motor: mo.ad, yakit: mo.yakit, hp: mo.hp, tuketim: mo.tuketim, vites: mo.vites,
-          kasa: m.kasa, paket: p.ad, seviye: p.seviye, satis: m.satis, konfor: KONFOR[m.kasa] };
+    const m = KATALOG[s.marka][s.model], v = m.v[Number(s.versiyon)], kasa = KASA_AD[v[4]];
+    a = { marka: s.marka, model: s.model, yil: Number(s.yil), motor: v[0], yakit: YAKIT_AD[v[2]], hp: v[1] || "", tuketim: "",
+          vites: VITES_AD[v[3]], kasa, paket: "", seviye: v[5], satis: m.s, konfor: KONFOR[kasa],
+          kasko: versiyonDegeri(v, Number(s.yil)) * 1000 };
   }
   Object.assign(a, { id: ++siradakiId, fiyat: "", km: "", hasar: "", degisen: "", boyali: "", agir: null, tasiyici: null });
   D.araclar.push(a);
@@ -836,6 +796,7 @@ function hesapla() {
     if ((kullanilan.has("Benzin") || kullanilan.has("Hibrit")) && !(sayi(D.yakit.benzin) > 0)) eksik.push({ i: D.aktifArac, yazi: "benzin fiyatı" });
     if (kullanilan.has("Dizel") && !(sayi(D.yakit.dizel) > 0)) eksik.push({ i: D.aktifArac, yazi: "dizel fiyatı" });
     if (kullanilan.has("LPG") && !(sayi(D.yakit.lpg) > 0)) eksik.push({ i: D.aktifArac, yazi: "LPG fiyatı" });
+    if (kullanilan.has("Elektrik") && !(sayi(D.yakit.elektrik) > 0)) eksik.push({ i: D.aktifArac, yazi: "elektrik fiyatı (TL/kWh)" });
   }
   if (eksik.length) {
     D.aktifArac = eksik[0].i;
@@ -857,8 +818,11 @@ kok.addEventListener("click", e => {
       if (D.adim > 0) { D = bosDurum(); ciz(true); }
       return;
     case "elleDegistir": s.elle = !s.elle; D.hata = ""; return ciz();
-    case "motor": s.motor = Number(b.dataset.i); s.paket = null; return ciz();
-    case "paket": s.paket = Number(b.dataset.i); D.hata = ""; return ciz();
+    case "kaskoYaz": {
+      const a = D.araclar[D.aktifArac];
+      a.fiyat = Math.round(a.kasko).toLocaleString("tr-TR");
+      return ciz();
+    }
     case "aracEkle": return aracEkle();
     case "aracSil": D.araclar = D.araclar.filter(a => String(a.id) !== b.dataset.id); return ciz();
     case "aktif": D.aktifArac = Number(b.dataset.i); D.hata = ""; return ciz(true);
@@ -897,9 +861,9 @@ kok.addEventListener("change", e => {
     const s = D.secim;
     const alanAd = el.dataset.secim;
     s[alanAd] = el.value;
-    if (alanAd === "marka") { s.model = ""; s.yil = ""; s.motor = null; s.paket = null; }
-    if (alanAd === "model") { s.yil = ""; s.motor = null; s.paket = null; }
-    if (alanAd === "yil") { s.motor = null; s.paket = null; }
+    if (alanAd === "marka") { s.model = ""; s.yil = ""; s.versiyon = ""; }
+    if (alanAd === "model") { s.yil = ""; s.versiyon = ""; }
+    if (alanAd === "yil") { s.versiyon = ""; }
     D.hata = "";
     ciz();
   } else if (el.dataset.alan && el.dataset.alan.startsWith("secim.")) {
