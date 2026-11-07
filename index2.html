@@ -1,0 +1,965 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Araba Karar</title>
+<meta name="description" content="İkinci el araba adaylarını önceliklerine göre karşılaştır: güvenlik kontrolü, AHP ve TOPSIS ile sıralama.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --koyu: #141A20;
+    --sari: #FFC61A;
+    --zemin: #EDF0F2;
+    --beyaz: #FFFFFF;
+    --cizgi: #CBD2D8;
+    --cizgi-acik: #E1E5E8;
+    --gri: #55606B;
+    --gri-koyu: #3D4750;
+    --kirmizi: #A8201A;
+    --kirmizi-zemin: #FBE6E3;
+    --yesil: #0A5F73;
+    --yesil-zemin: #DDF0F4;
+    --uyari: #6B4500;
+    --uyari-zemin: #FFF1CC;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--zemin);
+    color: var(--koyu);
+    font-family: Barlow, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  .kap { max-width: 520px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+  .baslik-cubuk { background: var(--koyu); color: var(--beyaz); padding: 16px 20px 14px; position: sticky; top: 0; z-index: 5; }
+  .baslik-satir { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .logo { font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 21px; letter-spacing: .2px; }
+  .adim-yazi { font-size: 14px; }
+  .bas-btn { background: transparent; border: 0; color: #D5DBE0; text-decoration: underline; font-size: 14px; min-height: 36px; padding: 0 4px; }
+  .ilerleme { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 10px; }
+  .ilerleme div { height: 5px; background: #48525C; }
+  .ilerleme div.dolu { background: var(--sari); }
+  main { flex-grow: 1; display: flex; flex-direction: column; padding: 22px 20px 24px; }
+  h1 { margin: 0; font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 34px; line-height: 1.05; }
+  h2 { margin: 0; font-size: 18px; font-weight: 700; }
+  .alt { margin: 6px 0 0; font-size: 15px; color: var(--gri); }
+  .kart { background: var(--beyaz); border: 1px solid var(--cizgi); border-radius: 8px; padding: 14px; }
+  .yigin { display: flex; flex-direction: column; gap: 8px; }
+  .bosluk { margin-top: 16px; }
+  .alt-bolum { margin-top: auto; padding-top: 18px; }
+  .ana-btn { width: 100%; min-height: 54px; border: 0; border-radius: 6px; background: var(--koyu); color: var(--beyaz); font-size: 17px; font-weight: 700; }
+  .ana-btn:disabled { background: #8E99A3; cursor: not-allowed; }
+  .sari-btn { background: var(--sari); color: var(--koyu); }
+  .cerceve-btn { min-height: 54px; background: transparent; border: 2px solid var(--koyu); border-radius: 6px; font-size: 16px; font-weight: 700; }
+  .link-btn { background: transparent; border: 0; text-decoration: underline; font-weight: 600; min-height: 44px; padding: 0 4px; }
+  .iki-btn { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 8px; }
+  .secenek { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 8px 14px; text-align: left; background: var(--beyaz); border: 1px solid var(--cizgi); border-radius: 8px; }
+  .secenek.secili { background: #FFF4CC; border: 2px solid var(--koyu); font-weight: 700; }
+  .secenek small { display: block; color: var(--gri); font-size: 14px; font-weight: 400; }
+  .hap-sira { display: flex; flex-wrap: wrap; gap: 8px; }
+  .hap { min-height: 44px; padding: 0 16px; background: var(--beyaz); border: 1px solid var(--cizgi); border-radius: 22px; font-weight: 600; }
+  .hap.secili { background: var(--koyu); color: var(--beyaz); border-color: var(--koyu); }
+  label { display: block; font-size: 14px; font-weight: 600; margin-top: 12px; }
+  label:first-child { margin-top: 0; }
+  input[type=text], input[type=number], select {
+    display: block; width: 100%; height: 48px; margin-top: 5px; padding: 0 12px;
+    background: var(--beyaz); border: 1px solid #8E99A3; border-radius: 6px; font-size: 17px;
+  }
+  select:disabled { background: #F2F4F5; color: #8E99A3; }
+  .kucuk { font-size: 13px; color: var(--gri); }
+  .uyari { display: flex; gap: 10px; padding: 12px; border-radius: 6px; font-size: 15px; background: var(--uyari-zemin); color: var(--uyari); }
+  .uyari.kirmizi { background: var(--kirmizi-zemin); color: var(--kirmizi); }
+  .uyari.yesil { background: var(--yesil-zemin); color: var(--yesil); }
+  .uyari svg { flex-shrink: 0; margin-top: 1px; }
+  .hata { color: var(--kirmizi); font-weight: 600; font-size: 15px; margin-top: 10px; }
+  .sekmeler { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 6px; }
+  .sekme { min-height: 54px; padding: 4px; background: var(--beyaz); border: 1px solid var(--cizgi); border-radius: 6px; font-size: 13px; font-weight: 600; line-height: 1.2; }
+  .sekme.aktif { border: 2px solid var(--koyu); }
+  .sekme.gecti { background: var(--yesil-zemin); color: var(--yesil); }
+  .sekme.kaldi { background: var(--kirmizi-zemin); color: var(--kirmizi); }
+  .sekme.dogrulanmadi { background: var(--uyari-zemin); color: var(--uyari); }
+  .uclu { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+  .uclu button { min-height: 46px; background: var(--beyaz); border: 1px solid #8E99A3; border-radius: 6px; font-weight: 600; }
+  .uclu button.secili { background: var(--koyu); color: var(--beyaz); border-color: var(--koyu); font-weight: 700; }
+  .soru { margin-top: 16px; font-size: 16px; font-weight: 600; }
+  .sayac { display: flex; justify-content: space-between; padding: 10px 12px; background: var(--sari); border-radius: 6px; font-weight: 700; }
+  .kriter { display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 0 14px; text-align: left; background: #F7F8F9; border: 1px solid var(--cizgi); border-radius: 6px; color: var(--gri-koyu); }
+  .kriter.secili { background: var(--beyaz); border: 2px solid var(--koyu); color: var(--koyu); font-weight: 700; }
+  .kriter:disabled { opacity: .55; cursor: not-allowed; }
+  .karsi { display: grid; grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr); align-items: center; gap: 6px; margin-top: 20px; }
+  .karsi .kutu { min-height: 88px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 8px; background: var(--koyu); color: var(--beyaz); border-radius: 8px; font-family: "Barlow Condensed", sans-serif; font-size: 26px; font-weight: 700; line-height: 1.05; }
+  .karsi span { text-align: center; font-weight: 700; color: var(--gri); }
+  .cubuk-satir { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; }
+  .cubuk { margin-top: 4px; height: 8px; background: var(--cizgi-acik); }
+  .cubuk div { height: 8px; background: var(--koyu); }
+  .cubuk.sari div { background: var(--sari); }
+  .rozet { font-size: 13px; font-weight: 700; margin-left: 4px; }
+  .rozet.gecti { color: var(--yesil); }
+  .rozet.kaldi { color: var(--kirmizi); }
+  .rozet.dogrulanmadi { color: var(--uyari); }
+  .sonuc-ikili { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .sonuc-kart { background: var(--beyaz); border: 1px solid var(--cizgi); border-radius: 6px; padding: 12px; }
+  .sonuc-kart.koyu { background: var(--koyu); color: var(--beyaz); border-color: var(--koyu); border-top: 6px solid var(--sari); }
+  .sonuc-kart.kirmizi-ust { border-top: 6px solid var(--kirmizi); }
+  .sonuc-kart h2 { font-size: 14px; font-weight: 600; color: var(--gri); }
+  .sonuc-kart.koyu h2 { color: #D5DBE0; }
+  .sonuc-kart .ad { margin-top: 6px; font-family: "Barlow Condensed", sans-serif; font-size: 28px; font-weight: 700; line-height: 1.05; }
+  .sonuc-kart .puan { font-size: 24px; font-weight: 700; }
+  .satir { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 44px; border-bottom: 1px solid var(--cizgi-acik); }
+  .satir:last-child { border-bottom: 0; }
+  ul.duz { margin: 8px 0 0; padding-left: 20px; }
+  ul.duz li { margin-top: 4px; }
+  .adim-liste { display: flex; flex-direction: column; margin-top: 40px; }
+  .adim-liste .o { display: flex; gap: 16px; min-height: 86px; }
+  .adim-liste .daire { width: 34px; height: 34px; border-radius: 50%; background: var(--sari); color: var(--koyu); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+  .adim-liste .cizgi { flex-grow: 1; margin: 6px 0; border-left: 3px dashed var(--sari); }
+  .adim-liste .sol { display: flex; flex-direction: column; align-items: center; width: 34px; }
+  .karsilama { background: var(--koyu); color: var(--beyaz); }
+  .karsilama .alt { color: #D5DBE0; font-size: 18px; }
+  .karsilama .kucuk { color: #BCC5CC; text-align: center; margin-top: 12px; }
+  .yazdir-gizle { }
+  @media print {
+    .baslik-cubuk, .yazdir-gizle { display: none !important; }
+    body { background: #fff; }
+    .kart, .sonuc-kart { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="kap" id="uygulama"></div>
+
+<script>
+/* =========================================================
+   1) ARAÇ KATALOĞU (deneme sürümü)
+   Değerler yaklaşık fabrika verileridir; kullanıcı her birini
+   veri girişi ekranında değiştirebilir. Yeni araç eklemek için
+   bu listeye aynı biçimde satır eklemek yeterli.
+   seviye: 1 = giriş paketi, 3 = orta paket, 5 = en üst paket
+   satis: aracın ileride ne kadar kolay satılacağı (1-5, tahmini)
+   ========================================================= */
+const KATALOG = {
+  "Renault": {
+    "Clio": { kasa: "Hatchback", satis: 5, yillar: [2020, 2025],
+      motorlar: [
+        { ad: "1.0 SCe 65 HP", yakit: "Benzin", hp: 65, tuketim: 5.4, vites: "Manuel" },
+        { ad: "1.0 TCe 90 HP", yakit: "Benzin", hp: 90, tuketim: 5.0, vites: "Manuel" },
+        { ad: "1.0 TCe 90 HP X-Tronic", yakit: "Benzin", hp: 90, tuketim: 5.6, vites: "Otomatik" }
+      ],
+      paketler: [ { ad: "Joy", seviye: 1 }, { ad: "Touch", seviye: 3 }, { ad: "Icon", seviye: 5 } ] },
+    "Megane Sedan": { kasa: "Sedan", satis: 4, yillar: [2017, 2024],
+      motorlar: [
+        { ad: "1.3 TCe 140 HP EDC", yakit: "Benzin", hp: 140, tuketim: 5.9, vites: "Otomatik" },
+        { ad: "1.5 Blue dCi 115 HP EDC", yakit: "Dizel", hp: 115, tuketim: 4.4, vites: "Otomatik" }
+      ],
+      paketler: [ { ad: "Joy", seviye: 1 }, { ad: "Touch", seviye: 3 }, { ad: "Icon", seviye: 5 } ] }
+  },
+  "Fiat": {
+    "Egea Sedan": { kasa: "Sedan", satis: 5, yillar: [2016, 2025],
+      motorlar: [
+        { ad: "1.4 Fire 95 HP", yakit: "Benzin", hp: 95, tuketim: 6.0, vites: "Manuel" },
+        { ad: "1.3 Multijet 95 HP", yakit: "Dizel", hp: 95, tuketim: 4.0, vites: "Manuel" },
+        { ad: "1.6 Multijet 130 HP DCT", yakit: "Dizel", hp: 130, tuketim: 4.3, vites: "Otomatik" }
+      ],
+      paketler: [ { ad: "Easy", seviye: 1 }, { ad: "Urban", seviye: 3 }, { ad: "Lounge", seviye: 5 } ] }
+  },
+  "Ford": {
+    "Focus": { kasa: "Hatchback", satis: 4, yillar: [2019, 2024],
+      motorlar: [
+        { ad: "1.0 EcoBoost 125 HP", yakit: "Benzin", hp: 125, tuketim: 5.5, vites: "Manuel" },
+        { ad: "1.5 Ti-VCT 123 HP", yakit: "Benzin", hp: 123, tuketim: 6.4, vites: "Otomatik" },
+        { ad: "1.5 TDCi 120 HP", yakit: "Dizel", hp: 120, tuketim: 4.5, vites: "Otomatik" }
+      ],
+      paketler: [ { ad: "Trend X", seviye: 1 }, { ad: "Titanium", seviye: 3 }, { ad: "ST-Line", seviye: 4 }, { ad: "Vignale", seviye: 5 } ] }
+  },
+  "Volkswagen": {
+    "Golf": { kasa: "Hatchback", satis: 4, yillar: [2017, 2024],
+      motorlar: [
+        { ad: "1.0 TSI 110 HP DSG", yakit: "Benzin", hp: 110, tuketim: 5.2, vites: "Otomatik" },
+        { ad: "1.5 TSI 150 HP DSG", yakit: "Benzin", hp: 150, tuketim: 5.8, vites: "Otomatik" },
+        { ad: "1.6 TDI 115 HP DSG", yakit: "Dizel", hp: 115, tuketim: 4.3, vites: "Otomatik" }
+      ],
+      paketler: [ { ad: "Trendline / Life", seviye: 1 }, { ad: "Comfortline / Style", seviye: 3 }, { ad: "Highline / R-Line", seviye: 5 } ] }
+  },
+  "Toyota": {
+    "Corolla Sedan": { kasa: "Sedan", satis: 5, yillar: [2019, 2025],
+      motorlar: [
+        { ad: "1.5 125 HP Multidrive S", yakit: "Benzin", hp: 125, tuketim: 6.0, vites: "Otomatik" },
+        { ad: "1.8 Hybrid 122 HP", yakit: "Hibrit", hp: 122, tuketim: 4.5, vites: "Otomatik" }
+      ],
+      paketler: [ { ad: "Vision", seviye: 1 }, { ad: "Dream", seviye: 3 }, { ad: "Flame / Passion", seviye: 5 } ] }
+  },
+  "Hyundai": {
+    "i20": { kasa: "Hatchback", satis: 4, yillar: [2020, 2025],
+      motorlar: [
+        { ad: "1.4 MPI 100 HP", yakit: "Benzin", hp: 100, tuketim: 6.0, vites: "Otomatik" },
+        { ad: "1.0 T-GDI 100 HP DCT", yakit: "Benzin", hp: 100, tuketim: 5.3, vites: "Otomatik" }
+      ],
+      paketler: [ { ad: "Jump", seviye: 1 }, { ad: "Style", seviye: 3 }, { ad: "Elite", seviye: 5 } ] }
+  },
+  "Dacia": {
+    "Duster": { kasa: "SUV", satis: 4, yillar: [2018, 2024],
+      motorlar: [
+        { ad: "1.5 Blue dCi 115 HP", yakit: "Dizel", hp: 115, tuketim: 4.5, vites: "Manuel" },
+        { ad: "1.3 TCe 150 HP EDC", yakit: "Benzin", hp: 150, tuketim: 6.3, vites: "Otomatik" }
+      ],
+      paketler: [ { ad: "Essential", seviye: 1 }, { ad: "Comfort", seviye: 3 }, { ad: "Prestige", seviye: 5 } ] }
+  },
+  "Peugeot": {
+    "3008": { kasa: "SUV", satis: 3, yillar: [2017, 2024],
+      motorlar: [
+        { ad: "1.2 PureTech 130 HP EAT8", yakit: "Benzin", hp: 130, tuketim: 5.6, vites: "Otomatik" },
+        { ad: "1.5 BlueHDi 130 HP EAT8", yakit: "Dizel", hp: 130, tuketim: 4.6, vites: "Otomatik" }
+      ],
+      paketler: [ { ad: "Active", seviye: 1 }, { ad: "Allure", seviye: 3 }, { ad: "GT", seviye: 5 } ] }
+  }
+};
+
+/* Kasa tipine göre otomatik konfor puanı (1-5). Kullanıcı değiştirebilir. */
+const KONFOR = { "Hatchback": 2, "Sedan": 3, "Station Wagon": 3, "SUV": 5, "MPV": 4 };
+
+/* Yakıt fiyatları (TL/litre). Varsayılan: 2 Kasım 2026, İstanbul Avrupa yakası. */
+const YAKIT_VARSAYILAN = { benzin: 80.40, dizel: 100.50, lpg: 41.20 };
+
+/* =========================================================
+   2) KRİTERLER
+   yon: "min" = düşük olan iyi, "max" = yüksek olan iyi
+   ========================================================= */
+const KRITERLER = [
+  { id: "fiyat",   ad: "Fiyat",                yon: "min" },
+  { id: "yakit",   ad: "Yakıt maliyeti",       yon: "min" },
+  { id: "km",      ad: "Kilometre",            yon: "min" },
+  { id: "konfor",  ad: "Konfor",               yon: "max" },
+  { id: "hp",      ad: "Motor gücü (HP)",      yon: "max" },
+  { id: "yas",     ad: "Yaş",                  yon: "min" },
+  { id: "paket",   ad: "Aracın paketi",        yon: "max" },
+  { id: "hasar",   ad: "Hasar kaydı (TL)",     yon: "min" },
+  { id: "degisen", ad: "Değişen parça sayısı", yon: "min" },
+  { id: "boyali",  ad: "Boyalı parça sayısı",  yon: "min" },
+  { id: "satis",   ad: "Satış piyasası",       yon: "max" }
+];
+const KRITER = Object.fromEntries(KRITERLER.map(k => [k.id, k]));
+const MAKS_KRITER = 6;
+const BU_YIL = new Date().getFullYear();
+
+/* AHP cevap ölçeği: soldaki kriterin sağdakine göre önemi */
+const OLCEK = [5, 3, 1, 1/3, 1/5];
+const RI = { 1: 0, 2: 0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24 };
+
+/* =========================================================
+   3) DURUM (tarayıcıda saklanır, sayfa yenilenince kaybolmaz)
+   ========================================================= */
+const ANAHTAR = "arabaKarar.v1";
+function bosDurum() {
+  return {
+    adim: 0,
+    araclar: [],
+    secim: { marka: "", model: "", yil: "", motor: null, paket: null, elle: false,
+             elleAd: "", elleYil: "", elleYakit: "Benzin", elleHp: "", elleTuketim: "", elleKasa: "Hatchback", elleSeviye: 3 },
+    aktifArac: 0,
+    kriterler: [],
+    cevaplar: {},
+    soru: 0,
+    agirlikEkrani: false,
+    yakit: { ...YAKIT_VARSAYILAN },
+    hata: ""
+  };
+}
+let D;
+try { D = JSON.parse(localStorage.getItem(ANAHTAR)) || bosDurum(); } catch (e) { D = bosDurum(); }
+function kaydet() { try { localStorage.setItem(ANAHTAR, JSON.stringify(D)); } catch (e) {} }
+
+/* =========================================================
+   4) HESAPLAMA FONKSİYONLARI
+   ========================================================= */
+/* Hem sayıları hem de "1.250.000" ve "5,5" gibi Türkçe yazımları okur */
+function sayi(v) {
+  if (typeof v === "number") return v;
+  if (v === null || v === undefined) return NaN;
+  let s = String(v).trim().replace(/\s/g, "");
+  if (s === "") return NaN;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  const n = Number(s);
+  return isNaN(n) ? NaN : n;
+}
+function yakitFiyati(tur) {
+  if (tur === "Dizel") return sayi(D.yakit.dizel);
+  if (tur === "LPG") return sayi(D.yakit.lpg);
+  return sayi(D.yakit.benzin); // Benzin ve Hibrit
+}
+function aracYasi(a) { return Math.max(0, BU_YIL - Number(a.yil)); }
+function deger(a, id) {
+  switch (id) {
+    case "fiyat": return sayi(a.fiyat);
+    case "yakit": return sayi(a.tuketim) * yakitFiyati(a.yakit);
+    case "km": return sayi(a.km);
+    case "konfor": return sayi(a.konfor);
+    case "hp": return sayi(a.hp);
+    case "yas": return aracYasi(a);
+    case "paket": return sayi(a.seviye);
+    case "hasar": return sayi(a.hasar);
+    case "degisen": return sayi(a.degisen);
+    case "boyali": return sayi(a.boyali);
+    case "satis": return sayi(a.satis);
+  }
+  return NaN;
+}
+function yillikKm(a) {
+  const km = sayi(a.km);
+  if (isNaN(km)) return null;
+  return Math.round(km / Math.max(1, aracYasi(a)));
+}
+/* Güvenlik durumu: Evet varsa "kaldi", Bilmiyorum varsa "dogrulanmadi", ikisi de Hayır ise "gecti" */
+function guvenlik(a) {
+  const c = [a.agir, a.tasiyici];
+  if (c.includes("evet")) return "kaldi";
+  if (c.includes("bilmiyorum") || c.includes(null) || c.includes(undefined)) return "dogrulanmadi";
+  return "gecti";
+}
+const DURUM_AD = { gecti: "Geçti", kaldi: "Kaldı", dogrulanmadi: "Doğrulanmadı" };
+
+function ciftler(n) {
+  const l = [];
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) l.push([i, j]);
+  return l;
+}
+/* AHP: geometrik ortalama ile ağırlık + tutarlılık oranı */
+function ahp(kriterler, cevaplar) {
+  const n = kriterler.length;
+  const M = Array.from({ length: n }, () => Array(n).fill(1));
+  ciftler(n).forEach(([i, j]) => {
+    const c = cevaplar[kriterler[i] + "|" + kriterler[j]];
+    const v = (c === undefined) ? 1 : OLCEK[c];
+    M[i][j] = v; M[j][i] = 1 / v;
+  });
+  const gm = M.map(r => Math.pow(r.reduce((s, x) => s * x, 1), 1 / n));
+  const top = gm.reduce((s, x) => s + x, 0);
+  const w = gm.map(x => x / top);
+  let lambda = 0;
+  for (let i = 0; i < n; i++) {
+    let s = 0;
+    for (let j = 0; j < n; j++) s += M[i][j] * w[j];
+    lambda += s / w[i];
+  }
+  lambda /= n;
+  const CI = n > 2 ? (lambda - n) / (n - 1) : 0;
+  const CR = RI[n] ? CI / RI[n] : 0;
+  return { w, CR };
+}
+/* TOPSIS: vektör normalizasyonu, ideal ve negatif ideal çözüme uzaklık */
+function topsis(araclar, kriterler, w) {
+  const m = araclar.length, n = kriterler.length;
+  const X = araclar.map(a => kriterler.map(k => deger(a, k)));
+  const R = Array.from({ length: m }, () => Array(n).fill(0));
+  for (let j = 0; j < n; j++) {
+    const payda = Math.sqrt(X.reduce((s, r) => s + r[j] * r[j], 0));
+    for (let i = 0; i < m; i++) R[i][j] = payda === 0 ? 0 : (X[i][j] / payda) * w[j];
+  }
+  const ideal = [], negatif = [];
+  for (let j = 0; j < n; j++) {
+    const kol = R.map(r => r[j]);
+    const enB = Math.max(...kol), enK = Math.min(...kol);
+    if (KRITER[kriterler[j]].yon === "max") { ideal.push(enB); negatif.push(enK); }
+    else { ideal.push(enK); negatif.push(enB); }
+  }
+  return araclar.map((a, i) => {
+    let dArti = 0, dEksi = 0;
+    for (let j = 0; j < n; j++) {
+      dArti += (R[i][j] - ideal[j]) ** 2;
+      dEksi += (R[i][j] - negatif[j]) ** 2;
+    }
+    dArti = Math.sqrt(dArti); dEksi = Math.sqrt(dEksi);
+    const puan = (dArti + dEksi) === 0 ? 0.5 : dEksi / (dArti + dEksi);
+    return { arac: a, puan };
+  }).sort((x, y) => y.puan - x.puan);
+}
+
+/* =========================================================
+   5) YARDIMCILAR
+   ========================================================= */
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function aracAdi(a) { return a.marka ? a.marka + " " + a.model : a.model; }
+function kisaAd(a) { return a.model; }
+function tl(x) { return isNaN(x) ? "-" : Math.round(x).toLocaleString("tr-TR"); }
+function puanYaz(x) { return x.toFixed(2).replace(".", ","); }
+const UYARI_IKON = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v5"/><path d="M12 17.5v.5"/></svg>';
+const TIK_IKON = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-10"/></svg>';
+let siradakiId = Date.now();
+
+/* =========================================================
+   6) EKRANLAR
+   ========================================================= */
+const ADIM_SAYISI = 7;
+function ust(adim) {
+  let cubuk = "";
+  for (let i = 1; i <= ADIM_SAYISI; i++) cubuk += `<div class="${i <= adim ? "dolu" : ""}"></div>`;
+  return `<header class="baslik-cubuk">
+    <div class="baslik-satir">
+      <span class="logo">Araba Karar</span>
+      <span class="adim-yazi">Adım ${adim} / ${ADIM_SAYISI}</span>
+      <button type="button" class="bas-btn" data-is="sifirla">Baştan başla</button>
+    </div>
+    <div class="ilerleme" aria-hidden="true">${cubuk}</div>
+  </header>`;
+}
+
+function ekranKarsilama() {
+  const adimlar = [
+    ["Araçları seç", "Marka, model, yıl, motor ve paket"],
+    ["Güvenlik kontrolünü yap", "Ağır hasar, taşıyıcı aksam ve airbag"],
+    ["Önceliklerini belirle", "En fazla 6 kriter seç ve karşılaştır"],
+    ["Sonucu gör", "Sıralama, gerekçe ve dikkat edilecekler"]
+  ];
+  const liste = adimlar.map((a, i) => `<div class="o">
+      <div class="sol"><div class="daire">${i + 1}</div>${i < adimlar.length - 1 ? '<div class="cizgi"></div>' : ""}</div>
+      <div><div style="font-size:18px;font-weight:600">${a[0]}</div><div style="color:#BCC5CC;font-size:15px">${a[1]}</div></div>
+    </div>`).join("");
+  return `<main class="karsilama">
+    <div class="logo">Araba Karar</div>
+    <h1 style="font-size:56px;margin-top:48px">Hangi araba sana uygun?</h1>
+    <p class="alt">Adaylarını ekle, önceliklerini belirle. Güvenlik kontrolü ve puan sonucunu yan yana gör.</p>
+    <div class="adim-liste">${liste}</div>
+    <div class="alt-bolum">
+      <button type="button" class="ana-btn sari-btn" data-is="git" data-adim="1">${D.araclar.length ? "Kaldığın yerden devam et" : "Karşılaştırmaya başla"}</button>
+      <p class="kucuk">Sonuçlar karar desteği içindir. Satın almadan önce ekspertiz ve tramer kontrolü yaptır.</p>
+    </div>
+  </main>`;
+}
+
+function ekranSecim() {
+  const s = D.secim;
+  let govde;
+  if (s.elle) {
+    govde = `<div class="kart bosluk">
+      <label for="elleAd">Marka ve model</label>
+      <input id="elleAd" type="text" data-alan="secim.elleAd" value="${esc(s.elleAd)}" placeholder="Örn. Opel Astra">
+      <label for="elleYil">Model yılı</label>
+      <input id="elleYil" type="number" inputmode="numeric" data-alan="secim.elleYil" value="${esc(s.elleYil)}" placeholder="Örn. 2019">
+      <label for="elleYakit">Yakıt türü</label>
+      <select id="elleYakit" data-alan="secim.elleYakit">${["Benzin", "Dizel", "Hibrit", "LPG"].map(y => `<option ${s.elleYakit === y ? "selected" : ""}>${y}</option>`).join("")}</select>
+      <label for="elleHp">Motor gücü (HP)</label>
+      <input id="elleHp" type="number" inputmode="numeric" data-alan="secim.elleHp" value="${esc(s.elleHp)}">
+      <label for="elleTuketim">Ortalama tüketim (L/100 km)</label>
+      <input id="elleTuketim" type="text" inputmode="decimal" data-alan="secim.elleTuketim" value="${esc(s.elleTuketim)}" placeholder="Örn. 5,5">
+      <label for="elleKasa">Kasa tipi</label>
+      <select id="elleKasa" data-alan="secim.elleKasa">${Object.keys(KONFOR).map(k => `<option ${s.elleKasa === k ? "selected" : ""}>${k}</option>`).join("")}</select>
+      <label for="elleSeviye">Paket seviyesi</label>
+      <select id="elleSeviye" data-alan="secim.elleSeviye">${[[1, "Giriş paketi"], [3, "Orta paket"], [5, "En üst paket"]].map(([v, t]) => `<option value="${v}" ${Number(s.elleSeviye) === v ? "selected" : ""}>${t}</option>`).join("")}</select>
+    </div>`;
+  } else {
+    const markalar = Object.keys(KATALOG);
+    const modeller = s.marka ? Object.keys(KATALOG[s.marka]) : [];
+    const m = s.marka && s.model ? KATALOG[s.marka][s.model] : null;
+    const yillar = [];
+    if (m) for (let y = m.yillar[1]; y >= m.yillar[0]; y--) yillar.push(y);
+    govde = `<div class="kart bosluk">
+      <label for="marka">Marka</label>
+      <select id="marka" data-secim="marka"><option value="">Seç</option>${markalar.map(x => `<option ${s.marka === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>
+      <label for="model">Model</label>
+      <select id="model" data-secim="model" ${s.marka ? "" : "disabled"}><option value="">Seç</option>${modeller.map(x => `<option ${s.model === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>
+      <label for="yil">Yıl</label>
+      <select id="yil" data-secim="yil" ${m ? "" : "disabled"}><option value="">Seç</option>${yillar.map(x => `<option ${String(s.yil) === String(x) ? "selected" : ""}>${x}</option>`).join("")}</select>
+    </div>`;
+    if (m && s.yil) {
+      govde += `<h2 class="bosluk">Motor</h2><div class="yigin" style="margin-top:10px">` +
+        m.motorlar.map((mo, i) => `<button type="button" class="secenek ${s.motor === i ? "secili" : ""}" data-is="motor" data-i="${i}" aria-pressed="${s.motor === i}">
+          <span>${esc(mo.ad)}<small>${mo.yakit}, ${mo.vites}, ${mo.hp} HP</small></span>${s.motor === i ? TIK_IKON : ""}</button>`).join("") + `</div>`;
+    }
+    if (m && s.yil && s.motor !== null) {
+      govde += `<h2 class="bosluk">Paket</h2><div class="hap-sira" style="margin-top:10px">` +
+        m.paketler.map((p, i) => `<button type="button" class="hap ${s.paket === i ? "secili" : ""}" data-is="paket" data-i="${i}" aria-pressed="${s.paket === i}">${esc(p.ad)}</button>`).join("") + `</div>`;
+    }
+  }
+  const eklenenler = D.araclar.length ? `<p class="kucuk bosluk">Eklenen araçlar: ${D.araclar.map(a => esc(aracAdi(a))).join(", ")}</p>` : "";
+  return ust(1) + `<main>
+    <h1>Aracı seç</h1>
+    <p class="alt">Karşılaştırmak istediğin araçları tek tek ekle. En az 2 araç gerekli.</p>
+    ${govde}
+    ${D.hata ? `<p class="hata" role="alert">${esc(D.hata)}</p>` : ""}
+    ${eklenenler}
+    <div class="alt-bolum yigin">
+      <button type="button" class="link-btn" data-is="elleDegistir">${s.elle ? "Listeden seçeceğim" : "Aracım listede yok, elle gireceğim"}</button>
+      <button type="button" class="ana-btn" data-is="aracEkle">Aracı ekle</button>
+      ${D.araclar.length ? `<button type="button" class="cerceve-btn" data-is="git" data-adim="2">Adaylarıma git (${D.araclar.length})</button>` : ""}
+    </div>
+  </main>`;
+}
+
+function ekranAdaylar() {
+  const kartlar = D.araclar.map(a => `<article class="kart">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <h2 style="font-size:17px">${esc(aracAdi(a))}</h2>
+        <button type="button" class="link-btn" data-is="aracSil" data-id="${a.id}" aria-label="${esc(aracAdi(a))} aracını çıkar">Çıkar</button>
+      </div>
+      <div style="font-size:14px;color:var(--gri-koyu)">${esc(a.yil)} · ${esc(a.motor)} · ${esc(a.paket)}</div>
+      <div style="margin-top:4px;font-size:14px;color:var(--gri)">${esc(a.yakit)} · ${esc(a.vites || "-")} · ${esc(a.kasa)} · ${esc(a.hp)} HP · ${esc(String(a.tuketim).replace(".", ","))} L/100 km</div>
+    </article>`).join("");
+  return ust(2) + `<main>
+    <h1>Adayların</h1>
+    <p class="alt">Teknik bilgiler otomatik geldi. Yanlış olanları veri girişi adımında düzeltebilirsin.</p>
+    <div class="yigin bosluk">${kartlar || '<p class="kucuk">Henüz araç eklemedin.</p>'}</div>
+    <button type="button" class="cerceve-btn bosluk" style="border-style:dashed;border-color:var(--gri)" data-is="git" data-adim="1">Araç ekle</button>
+    <div class="alt-bolum">
+      <p class="kucuk" style="text-align:center;margin:0 0 10px">Tüketim değerleri yaklaşık fabrika verisidir.</p>
+      <button type="button" class="ana-btn" data-is="git" data-adim="3" ${D.araclar.length < 2 ? "disabled" : ""}>Güvenlik kontrolüne geç</button>
+      ${D.araclar.length < 2 ? '<p class="kucuk" style="text-align:center">Devam etmek için en az 2 araç ekle.</p>' : ""}
+    </div>
+  </main>`;
+}
+
+function ucluSecim(a, alan) {
+  return `<div class="uclu" role="group">` + [["evet", "Evet"], ["hayir", "Hayır"], ["bilmiyorum", "Bilmiyorum"]].map(([v, t]) =>
+    `<button type="button" class="${a[alan] === v ? "secili" : ""}" aria-pressed="${a[alan] === v}" data-is="guvenlik" data-alan="${alan}" data-v="${v}">${t}</button>`).join("") + `</div>`;
+}
+function ekranGuvenlik() {
+  if (D.aktifArac >= D.araclar.length) D.aktifArac = 0;
+  const a = D.araclar[D.aktifArac];
+  const sekmeler = D.araclar.map((x, i) => {
+    const cevapli = x.agir && x.tasiyici;
+    const d = cevapli ? guvenlik(x) : "";
+    return `<button type="button" class="sekme ${d} ${i === D.aktifArac ? "aktif" : ""}" data-is="aktif" data-i="${i}" ${i === D.aktifArac ? 'aria-current="true"' : ""}>${esc(kisaAd(x))}<br>${cevapli ? DURUM_AD[d] : "Sırada"}</button>`;
+  }).join("");
+  let durum = "";
+  if (a.agir && a.tasiyici) {
+    const d = guvenlik(a);
+    if (d === "kaldi") durum = `<div class="uyari kirmizi bosluk">${UYARI_IKON}<div><strong>Güvenlik kontrolünden geçmedi.</strong> Sonuçta kırmızı uyarıyla gösterilecek.</div></div>`;
+    else if (d === "dogrulanmadi") durum = `<div class="uyari bosluk">${UYARI_IKON}<div><strong>Doğrulanmadı.</strong> Bu araç güvenli sayılmayacak.</div></div>`;
+    else durum = `<div class="uyari yesil bosluk">${TIK_IKON}<div><strong>Güvenlik kontrolünden geçti.</strong></div></div>`;
+  }
+  const hepsi = D.araclar.every(x => x.agir && x.tasiyici);
+  const sonraki = D.araclar.findIndex((x, i) => i !== D.aktifArac && !(x.agir && x.tasiyici));
+  return ust(3) + `<main>
+    <h1>Güvenlik kontrolü</h1>
+    <p class="alt">Bu sorular puana karışmaz. Sonuç ekranında ayrı gösterilir.</p>
+    <div class="sekmeler bosluk">${sekmeler}</div>
+    <section class="kart bosluk">
+      <h2 style="font-size:20px">${esc(aracAdi(a))}</h2>
+      <div class="soru">Ağır hasar kaydı var mı?</div>
+      ${ucluSecim(a, "agir")}
+      <div class="soru">Taşıyıcı aksamlarda veya airbaglerde işlem ya da değişim var mı?</div>
+      ${ucluSecim(a, "tasiyici")}
+      ${durum}
+    </section>
+    <p class="kucuk bosluk">"Bilmiyorum" seçilen araç güvenli sayılmaz, sonuçta "doğrulanmadı" olarak görünür.</p>
+    <div class="alt-bolum">
+      ${hepsi ? `<button type="button" class="ana-btn" data-is="git" data-adim="4">Kriter seçimine geç</button>`
+              : sonraki >= 0 ? `<button type="button" class="ana-btn" data-is="aktif" data-i="${sonraki}">Sonraki araç: ${esc(kisaAd(D.araclar[sonraki]))}</button>` : ""}
+    </div>
+  </main>`;
+}
+
+function ekranKriterler() {
+  const n = D.kriterler.length;
+  const dolu = n >= MAKS_KRITER;
+  const liste = KRITERLER.map(k => {
+    const sec = D.kriterler.includes(k.id);
+    return `<button type="button" class="kriter ${sec ? "secili" : ""}" aria-pressed="${sec}" data-is="kriter" data-id="${k.id}" ${!sec && dolu ? "disabled" : ""}><span>${k.ad}</span>${sec ? TIK_IKON : ""}</button>`;
+  }).join("");
+  const soruSayisi = n * (n - 1) / 2;
+  const hasarSayisi = ["hasar", "degisen", "boyali"].filter(x => D.kriterler.includes(x)).length;
+  return ust(4) + `<main>
+    <h1>Senin için ne önemli?</h1>
+    <div class="sayac bosluk"><span>${n} / ${MAKS_KRITER} kriter seçildi</span><span>${soruSayisi} soru</span></div>
+    <div class="yigin" style="margin-top:12px">${liste}</div>
+    ${dolu ? '<p class="kucuk">Başka bir kriter seçmek için önce birini kaldır.</p>' : ""}
+    ${hasarSayisi >= 2 ? `<div class="uyari bosluk">${UYARI_IKON}<div>Hasar kaydı, değişen ve boyalı parça çoğu zaman aynı kazayı ölçer. Birlikte seçince hasar geçmişinin etkisi artar.</div></div>` : ""}
+    <div class="alt-bolum">
+      <button type="button" class="ana-btn" data-is="kriterBitti" ${n < 2 ? "disabled" : ""}>Karşılaştırmaya geç</button>
+      ${n < 2 ? '<p class="kucuk" style="text-align:center">En az 2 kriter seç.</p>' : ""}
+    </div>
+  </main>`;
+}
+
+function ekranKarsilastirma() {
+  const C = ciftler(D.kriterler.length);
+  if (D.agirlikEkrani || C.length === 0) return ekranAgirliklar();
+  if (D.soru >= C.length) D.soru = C.length - 1;
+  const [i, j] = C[D.soru];
+  const a = KRITER[D.kriterler[i]].ad, b = KRITER[D.kriterler[j]].ad;
+  const anahtar = D.kriterler[i] + "|" + D.kriterler[j];
+  const cevap = D.cevaplar[anahtar];
+  const secenekler = [`${a} çok daha önemli`, `${a} daha önemli`, "İkisi eşit", `${b} daha önemli`, `${b} çok daha önemli`];
+  return ust(5) + `<main>
+    <div style="font-size:15px;font-weight:600;color:var(--gri)">Soru ${D.soru + 1} / ${C.length}</div>
+    <h1 style="margin-top:4px">Hangisi senin için daha önemli?</h1>
+    <div class="karsi"><div class="kutu">${a}</div><span>ile</span><div class="kutu">${b}</div></div>
+    <div class="yigin" style="margin-top:20px">
+      ${secenekler.map((t, k) => `<button type="button" class="secenek ${cevap === k ? "secili" : ""}" aria-pressed="${cevap === k}" data-is="cevap" data-k="${k}" data-anahtar="${anahtar}">${t}</button>`).join("")}
+    </div>
+    <div class="alt-bolum iki-btn">
+      <button type="button" class="cerceve-btn" data-is="soruGeri">Geri</button>
+      <button type="button" class="ana-btn" data-is="soruIleri" ${cevap === undefined ? "disabled" : ""}>${D.soru === C.length - 1 ? "Ağırlıkları gör" : "Sonraki soru"}</button>
+    </div>
+  </main>`;
+}
+
+function ekranAgirliklar() {
+  const { w, CR } = ahp(D.kriterler, D.cevaplar);
+  const sira = D.kriterler.map((k, i) => ({ k, w: w[i] })).sort((x, y) => y.w - x.w);
+  const enB = sira[0].w;
+  const satirlar = sira.map(x => `<div>
+      <div class="cubuk-satir"><span style="font-weight:600">${KRITER[x.k].ad}</span><span style="font-weight:700">%${Math.round(x.w * 100)}</span></div>
+      <div class="cubuk sari" aria-hidden="true"><div style="width:${(x.w / enB) * 100}%"></div></div>
+    </div>`).join("");
+  const tutarli = CR <= 0.10;
+  return ust(5) + `<main>
+    <h1>Önceliklerin</h1>
+    <p class="alt">Cevaplarından çıkan kriter ağırlıkları (AHP).</p>
+    <section class="kart bosluk yigin" style="gap:12px">${satirlar}</section>
+    ${D.kriterler.length > 2 ? (tutarli
+      ? `<div class="uyari yesil bosluk">${TIK_IKON}<div><strong>Cevapların tutarlı.</strong> Tutarlılık oranı: ${CR.toFixed(2).replace(".", ",")} (0,10 altı iyi)</div></div>`
+      : `<div class="uyari bosluk">${UYARI_IKON}<div><strong>Cevapların birbiriyle çelişiyor olabilir.</strong> Tutarlılık oranı ${CR.toFixed(2).replace(".", ",")}, 0,10'un üstünde. Soruları gözden geçirmeni öneririm.</div></div>`) : ""}
+    <div class="alt-bolum iki-btn">
+      <button type="button" class="cerceve-btn" data-is="sorulara">Sorular</button>
+      <button type="button" class="ana-btn" data-is="git" data-adim="6">Veri girişine geç</button>
+    </div>
+  </main>`;
+}
+
+/* Yıllık ortalama km notu (eşikler örnek: 5.000 altı düşük, 35.000 üstü yüksek) */
+function ykNotu(a) {
+  const yk = yillikKm(a);
+  if (yk === null) return "";
+  if (yk < 5000) return `<div class="uyari" style="margin-top:8px">${UYARI_IKON}<div><strong>Yıllık ortalama: ${tl(yk)} km.</strong> Beklenenden düşük olabilir, kilometreyi servis ve ekspertiz kayıtlarıyla doğrula.</div></div>`;
+  if (yk > 35000) return `<div class="uyari" style="margin-top:8px">${UYARI_IKON}<div><strong>Yıllık ortalama: ${tl(yk)} km.</strong> Yoğun kullanılmış olabilir, kullanım geçmişini sor.</div></div>`;
+  return `<p class="kucuk" style="margin:6px 0 0">Yıllık ortalama: ${tl(yk)} km</p>`;
+}
+function alan(a, ad, etiket, ipucu, mod) {
+  const id = "a" + a.id + ad;
+  return `<label for="${id}">${etiket}</label>
+    <input id="${id}" type="text" inputmode="${mod || "numeric"}" data-arac="${a.id}" data-alan="${ad}" value="${esc(a[ad] ?? "")}" ${ipucu ? `placeholder="${ipucu}"` : ""}>`;
+}
+function ekranVeri() {
+  if (D.aktifArac >= D.araclar.length) D.aktifArac = 0;
+  const a = D.araclar[D.aktifArac];
+  const k = D.kriterler;
+  const sekmeler = D.araclar.map((x, i) => `<button type="button" class="sekme ${i === D.aktifArac ? "aktif" : ""}" data-is="aktif" data-i="${i}">${esc(kisaAd(x))}</button>`).join("");
+  let kullanici = "";
+  if (k.includes("fiyat")) kullanici += alan(a, "fiyat", "Fiyat (TL)", "Örn. 1.250.000");
+  kullanici += alan(a, "km", "Kilometre" + (k.includes("km") ? "" : " (isteğe bağlı)"), "Örn. 85.000");
+  kullanici += `<div id="ykNot">${ykNotu(a)}</div>`;
+  if (k.includes("hasar")) kullanici += alan(a, "hasar", "Hasar kaydı (TL, yoksa 0)", "0");
+  if (k.includes("degisen")) kullanici += alan(a, "degisen", "Değişen parça sayısı", "0");
+  if (k.includes("boyali")) kullanici += alan(a, "boyali", "Boyalı parça sayısı", "0");
+
+  let otomatik = "";
+  if (k.includes("yakit")) otomatik += alan(a, "tuketim", `Ortalama tüketim (L/100 km, ${esc(a.yakit)})`, "", "decimal");
+  if (k.includes("hp")) otomatik += alan(a, "hp", "Motor gücü (HP)");
+  if (k.includes("konfor")) otomatik += alan(a, "konfor", `Konfor puanı (1-5, ${esc(a.kasa)})`);
+  if (k.includes("paket")) otomatik += alan(a, "seviye", `Paket seviyesi (1-5, ${esc(a.paket)})`);
+  if (k.includes("satis")) otomatik += alan(a, "satis", "Satış piyasası (1-5, tahmini)");
+  if (k.includes("yas")) otomatik += `<p class="kucuk" style="margin-top:12px">Yaş: ${aracYasi(a)} (model yılından hesaplandı)</p>`;
+
+  let yakitKart = "";
+  if (k.includes("yakit")) {
+    yakitKart = `<section class="kart bosluk">
+      <h2>Yakıt fiyatları (TL/litre)</h2>
+      <p class="kucuk" style="margin:4px 0 0">Varsayılan: 2 Kasım 2026, İstanbul. Kendi şehrindeki güncel fiyatı yaz.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+        ${[["benzin", "Benzin"], ["dizel", "Dizel"], ["lpg", "LPG"]].map(([id, t]) => `<div><label for="y${id}">${t}</label><input id="y${id}" type="text" inputmode="decimal" data-yakit="${id}" value="${esc(String(D.yakit[id]).replace(".", ","))}"></div>`).join("")}
+      </div>
+    </section>`;
+  }
+  return ust(6) + `<main>
+    <h1>Araç bilgilerini gir</h1>
+    <p class="alt">Sadece seçtiğin kriterler için gereken bilgileri soruyoruz.</p>
+    <div class="sekmeler bosluk">${sekmeler}</div>
+    <section class="kart bosluk">
+      <h2>${esc(aracAdi(a))}, ${esc(a.yil)}</h2>
+      ${kullanici}
+    </section>
+    ${otomatik ? `<section class="kart bosluk"><h2>Otomatik gelen değerler</h2><p class="kucuk" style="margin:4px 0 0">Yanlışsa değiştirebilirsin.</p>${otomatik}</section>` : ""}
+    ${yakitKart}
+    ${D.hata ? `<p class="hata" role="alert">${esc(D.hata)}</p>` : ""}
+    <div class="alt-bolum">
+      <button type="button" class="ana-btn" data-is="hesapla">Sonucu hesapla</button>
+    </div>
+  </main>`;
+}
+
+/* Hassasiyet: bir kriterin önemi azalır/artarsa birinci değişiyor mu? */
+function hassasiyet(grup, w) {
+  if (grup.length < 2) return [];
+  const birinci = topsis(grup, D.kriterler, w)[0].arac.id;
+  const mesajlar = [];
+  D.kriterler.forEach((k, i) => {
+    [0.5, 2].forEach(f => {
+      const yeni = w.map((x, j) => j === i ? x * f : x);
+      const t = yeni.reduce((s, x) => s + x, 0);
+      const sonuc = topsis(grup, D.kriterler, yeni.map(x => x / t))[0].arac;
+      if (sonuc.id !== birinci) mesajlar.push(`<strong>${KRITER[k].ad}</strong> kriterinin önemi ${f > 1 ? "artarsa" : "azalırsa"} birinci <strong>${esc(kisaAd(sonuc))}</strong> olur.`);
+    });
+  });
+  return mesajlar;
+}
+function gerekce(kazanan, grup, w) {
+  if (grup.length < 2) return "";
+  const guclu = [];
+  D.kriterler.forEach((k, i) => {
+    const degerler = grup.map(a => deger(a, k));
+    const en = KRITER[k].yon === "max" ? Math.max(...degerler) : Math.min(...degerler);
+    if (deger(kazanan, k) === en && new Set(degerler).size > 1) guclu.push({ ad: KRITER[k].ad, w: w[i] });
+  });
+  guclu.sort((x, y) => y.w - x.w);
+  if (!guclu.length) return "";
+  return `${esc(kisaAd(kazanan))} en çok şu kriterlerde öne çıkıyor: ${guclu.slice(0, 3).map(x => x.ad).join(", ")}.`;
+}
+function siraListesi(sonuc, sari, rozetli) {
+  return sonuc.map((s, i) => {
+    const d = guvenlik(s.arac);
+    return `<div>
+      <div class="cubuk-satir"><span style="font-weight:600">${i + 1}. ${esc(aracAdi(s.arac))}${rozetli ? `<span class="rozet ${d}">${DURUM_AD[d]}</span>` : ""}</span><span style="font-weight:700">${puanYaz(s.puan)}</span></div>
+      <div class="cubuk ${sari ? "sari" : ""}" aria-hidden="true"><div style="width:${Math.max(2, s.puan * 100)}%"></div></div>
+    </div>`;
+  }).join("");
+}
+function ekranSonuc() {
+  const { w } = ahp(D.kriterler, D.cevaplar);
+  const tum = topsis(D.araclar, D.kriterler, w);
+  const guvenli = D.araclar.filter(a => guvenlik(a) === "gecti");
+  const guvenliSonuc = guvenli.length >= 2 ? topsis(guvenli, D.kriterler, w) : null;
+  const enIyi = tum[0];
+  const enIyiDurum = guvenlik(enIyi.arac);
+
+  let baslik, kartlar, aciklama;
+  if (enIyiDurum === "gecti") {
+    const p = guvenliSonuc ? guvenliSonuc[0].puan : enIyi.puan;
+    baslik = "Net öneri";
+    kartlar = `<section class="sonuc-kart koyu"><h2>En yüksek puan ve güvenlik kontrolünden geçti</h2><div class="ad">${esc(aracAdi(enIyi.arac))}</div><div class="puan">${puanYaz(p)}</div></section>`;
+    aciklama = `${esc(kisaAd(enIyi.arac))} hem puanda önde hem de güvenlik kontrolünden geçti.`;
+  } else {
+    const sorun = enIyiDurum === "kaldi" ? "Güvenlik kontrolünden geçmedi" : "Güvenlik bilgisi doğrulanmadı";
+    const solKart = `<section class="sonuc-kart ${enIyiDurum === "kaldi" ? "kirmizi-ust" : ""}"><h2>En yüksek puan</h2><div class="ad">${esc(kisaAd(enIyi.arac))}</div><div class="puan">${puanYaz(enIyi.puan)}</div>
+      <div class="rozet ${enIyiDurum}" style="display:flex;gap:5px;margin:8px 0 0">${UYARI_IKON}<span>${sorun}</span></div></section>`;
+    if (guvenli.length === 0) {
+      baslik = "Güvenlik kontrolünü geçen araç yok";
+      kartlar = `<section class="sonuc-kart kirmizi-ust"><h2>En yüksek puan (bilgi amaçlı)</h2><div class="ad">${esc(aracAdi(enIyi.arac))}</div><div class="puan">${puanYaz(enIyi.puan)}</div></section>`;
+      aciklama = "Adaylarının hiçbiri güvenlik kontrolünden geçmedi veya bilgileri doğrulanmadı. Sıralama sadece bilgi amaçlıdır; ekspertiz sonuçlarını girdikten sonra tekrar dene.";
+    } else if (guvenli.length === 1) {
+      baslik = "İki sonuç birbirinden farklı";
+      kartlar = `<div class="sonuc-ikili">${solKart}<section class="sonuc-kart koyu"><h2>Güvenlikten geçen tek aday</h2><div class="ad">${esc(kisaAd(guvenli[0]))}</div><div class="rozet" style="display:flex;gap:5px;margin:8px 0 0;color:var(--sari)">${TIK_IKON}<span>Güvenlikten geçti</span></div></section></div>`;
+      aciklama = `${esc(kisaAd(enIyi.arac))} puanda önde, ama güvenlik açısından sorunlu. Güvenlik kontrolünü geçen tek araç ${esc(kisaAd(guvenli[0]))}.`;
+    } else {
+      const g = guvenliSonuc[0];
+      baslik = "İki sonuç birbirinden farklı";
+      kartlar = `<div class="sonuc-ikili">${solKart}<section class="sonuc-kart koyu"><h2>Güvenlikten geçenlerde en yüksek</h2><div class="ad">${esc(kisaAd(g.arac))}</div><div class="puan">${puanYaz(g.puan)}</div><div class="rozet" style="display:flex;gap:5px;margin:8px 0 0;color:var(--sari)">${TIK_IKON}<span>Güvenlikten geçti</span></div></section></div>`;
+      aciklama = `${esc(kisaAd(enIyi.arac))} puanda önde, ama ${enIyiDurum === "kaldi" ? "güvenlik kontrolünden geçmedi" : "güvenlik bilgileri doğrulanmadı"}. Önceliğin güvenlikse ${esc(kisaAd(g.arac))} daha uygun.`;
+    }
+  }
+
+  const grup = guvenliSonuc ? guvenli : D.araclar;
+  const kazanan = guvenliSonuc ? guvenliSonuc[0].arac : enIyi.arac;
+  const gerekceYazi = gerekce(kazanan, grup, w);
+  const hassas = hassasiyet(grup, w);
+
+  const uyarilar = [];
+  D.araclar.forEach(a => {
+    const d = guvenlik(a);
+    if (d === "kaldi") uyarilar.push(`<strong>${esc(kisaAd(a))}:</strong> Güvenlik kontrolünden geçmedi.`);
+    if (d === "dogrulanmadi") uyarilar.push(`<strong>${esc(kisaAd(a))}:</strong> Güvenlik bilgileri doğrulanmadı.`);
+    const yk = yillikKm(a);
+    if (yk !== null && yk < 5000) uyarilar.push(`<strong>${esc(kisaAd(a))}:</strong> Yıllık ortalama ${tl(yk)} km, kilometreyi doğrula.`);
+    if (yk !== null && yk > 35000) uyarilar.push(`<strong>${esc(kisaAd(a))}:</strong> Yıllık ortalama ${tl(yk)} km, yoğun kullanılmış olabilir.`);
+  });
+
+  return ust(7) + `<main>
+    <h1>${baslik}</h1>
+    <div class="bosluk">${kartlar}</div>
+    <p style="margin:14px 0 0;font-size:16px">${aciklama}</p>
+    ${gerekceYazi ? `<p style="margin:8px 0 0;font-size:16px">${gerekceYazi}</p>` : ""}
+
+    <section class="kart bosluk">
+      <h2>Tüm araçların sıralaması</h2>
+      <div class="yigin" style="margin-top:10px;gap:10px">${siraListesi(tum, false, true)}</div>
+      ${guvenliSonuc ? `<h2 style="margin-top:18px">Sadece güvenlikten geçenler</h2><div class="yigin" style="margin-top:10px;gap:10px">${siraListesi(guvenliSonuc, true, false)}</div>` : ""}
+      <p class="kucuk" style="margin:10px 0 0">Puanlar 0 ile 1 arasındadır (TOPSIS). Karşılaştırılan araçlar değişince puanlar da değişir.</p>
+    </section>
+
+    <section class="kart bosluk">
+      <h2>Sonucu ne değiştirir?</h2>
+      ${hassas.length ? `<ul class="duz">${hassas.map(m => `<li>${m}</li>`).join("")}</ul>`
+                      : `<p style="margin:6px 0 0">Bir kriterin önemi yarıya inse veya iki katına çıksa da birinci değişmiyor. Sonuç sağlam görünüyor.</p>`}
+      <button type="button" class="link-btn yazdir-gizle" data-is="git" data-adim="5">Öncelikleri değiştir ve tekrar dene</button>
+    </section>
+
+    ${uyarilar.length ? `<div class="uyari bosluk" style="display:block"><strong>Dikkat edilecekler</strong><ul class="duz">${uyarilar.map(u => `<li>${u}</li>`).join("")}</ul></div>` : ""}
+
+    <div class="alt-bolum">
+      <button type="button" class="ana-btn yazdir-gizle" data-is="yazdir">Raporu kaydet / yazdır</button>
+      <p class="kucuk" style="margin:10px 0 0">Bu sonuç karar desteği içindir, satın alma tavsiyesi değildir. Girilen bilgilerin ve tahmini değerlerin doğruluğundan site sorumlu değildir. Satın almadan önce ekspertiz ve tramer kontrolü yaptır.</p>
+    </div>
+  </main>`;
+}
+
+/* =========================================================
+   7) ÇİZİM VE OLAYLAR
+   ========================================================= */
+const EKRANLAR = [ekranKarsilama, ekranSecim, ekranAdaylar, ekranGuvenlik, ekranKriterler, ekranKarsilastirma, ekranVeri, ekranSonuc];
+const kok = document.getElementById("uygulama");
+function ciz(yukari) {
+  kok.innerHTML = EKRANLAR[D.adim]();
+  kaydet();
+  if (yukari) window.scrollTo(0, 0);
+}
+function git(adim) {
+  // Ön koşulları kontrol et
+  if (adim >= 3 && D.araclar.length < 2) adim = D.araclar.length ? 2 : 1;
+  if (adim >= 4 && !D.araclar.every(a => a.agir && a.tasiyici)) adim = 3;
+  if (adim >= 5 && D.kriterler.length < 2) adim = 4;
+  if (adim === 5) { D.agirlikEkrani = false; D.soru = 0; }
+  if (adim === 3 || adim === 6) D.aktifArac = 0;
+  D.adim = adim; D.hata = "";
+  ciz(true);
+}
+function aracEkle() {
+  const s = D.secim;
+  let a;
+  if (s.elle) {
+    const yil = sayi(s.elleYil), hp = sayi(s.elleHp), tuk = sayi(s.elleTuketim);
+    if (!s.elleAd.trim() || isNaN(yil) || yil < 1980 || yil > BU_YIL + 1 || isNaN(hp) || isNaN(tuk)) {
+      D.hata = "Marka/model, model yılı, motor gücü ve tüketim bilgilerini doldur."; return ciz();
+    }
+    const sev = Number(s.elleSeviye);
+    a = { marka: "", model: s.elleAd.trim(), yil, motor: "Elle girildi", yakit: s.elleYakit, hp, tuketim: tuk, vites: "",
+          kasa: s.elleKasa, paket: sev === 1 ? "Giriş paketi" : sev === 5 ? "En üst paket" : "Orta paket", seviye: sev, satis: 3, konfor: KONFOR[s.elleKasa] };
+  } else {
+    if (!s.marka || !s.model || !s.yil || s.motor === null || s.paket === null) {
+      D.hata = "Marka, model, yıl, motor ve paketi seç."; return ciz();
+    }
+    const m = KATALOG[s.marka][s.model], mo = m.motorlar[s.motor], p = m.paketler[s.paket];
+    a = { marka: s.marka, model: s.model, yil: Number(s.yil), motor: mo.ad, yakit: mo.yakit, hp: mo.hp, tuketim: mo.tuketim, vites: mo.vites,
+          kasa: m.kasa, paket: p.ad, seviye: p.seviye, satis: m.satis, konfor: KONFOR[m.kasa] };
+  }
+  Object.assign(a, { id: ++siradakiId, fiyat: "", km: "", hasar: "", degisen: "", boyali: "", agir: null, tasiyici: null });
+  D.araclar.push(a);
+  D.secim = { ...bosDurum().secim, elle: false };
+  D.adim = 2; D.hata = "";
+  ciz(true);
+}
+function hesapla() {
+  const eksik = [];
+  const gerekli = [];
+  if (D.kriterler.includes("fiyat")) gerekli.push(["fiyat", "fiyat"]);
+  if (D.kriterler.includes("km")) gerekli.push(["km", "kilometre"]);
+  if (D.kriterler.includes("hasar")) gerekli.push(["hasar", "hasar kaydı"]);
+  if (D.kriterler.includes("degisen")) gerekli.push(["degisen", "değişen parça"]);
+  if (D.kriterler.includes("boyali")) gerekli.push(["boyali", "boyalı parça"]);
+  if (D.kriterler.includes("yakit")) gerekli.push(["tuketim", "tüketim"]);
+  if (D.kriterler.includes("hp")) gerekli.push(["hp", "motor gücü"]);
+  if (D.kriterler.includes("konfor")) gerekli.push(["konfor", "konfor puanı"]);
+  if (D.kriterler.includes("paket")) gerekli.push(["seviye", "paket seviyesi"]);
+  if (D.kriterler.includes("satis")) gerekli.push(["satis", "satış piyasası"]);
+  D.araclar.forEach((a, i) => {
+    gerekli.forEach(([alan, ad]) => {
+      const v = sayi(a[alan]);
+      if (isNaN(v) || v < 0) eksik.push({ i, yazi: `${kisaAd(a)}: ${ad}` });
+    });
+  });
+  if (D.kriterler.includes("yakit")) {
+    const kullanilan = new Set(D.araclar.map(a => a.yakit));
+    if ((kullanilan.has("Benzin") || kullanilan.has("Hibrit")) && !(sayi(D.yakit.benzin) > 0)) eksik.push({ i: D.aktifArac, yazi: "benzin fiyatı" });
+    if (kullanilan.has("Dizel") && !(sayi(D.yakit.dizel) > 0)) eksik.push({ i: D.aktifArac, yazi: "dizel fiyatı" });
+    if (kullanilan.has("LPG") && !(sayi(D.yakit.lpg) > 0)) eksik.push({ i: D.aktifArac, yazi: "LPG fiyatı" });
+  }
+  if (eksik.length) {
+    D.aktifArac = eksik[0].i;
+    D.hata = "Eksik veya hatalı bilgi: " + eksik.slice(0, 4).map(e => e.yazi).join(", ") + (eksik.length > 4 ? "…" : "");
+    return ciz(true);
+  }
+  D.adim = 7; D.hata = "";
+  ciz(true);
+}
+
+kok.addEventListener("click", e => {
+  const b = e.target.closest("[data-is]");
+  if (!b || b.disabled) return;
+  const is = b.dataset.is;
+  const s = D.secim;
+  switch (is) {
+    case "git": return git(Number(b.dataset.adim));
+    case "sifirla":
+      if (D.adim > 0) { D = bosDurum(); ciz(true); }
+      return;
+    case "elleDegistir": s.elle = !s.elle; D.hata = ""; return ciz();
+    case "motor": s.motor = Number(b.dataset.i); s.paket = null; return ciz();
+    case "paket": s.paket = Number(b.dataset.i); D.hata = ""; return ciz();
+    case "aracEkle": return aracEkle();
+    case "aracSil": D.araclar = D.araclar.filter(a => String(a.id) !== b.dataset.id); return ciz();
+    case "aktif": D.aktifArac = Number(b.dataset.i); D.hata = ""; return ciz(true);
+    case "guvenlik": {
+      const a = D.araclar[D.aktifArac];
+      a[b.dataset.alan] = b.dataset.v;
+      return ciz();
+    }
+    case "kriter": {
+      const id = b.dataset.id;
+      if (D.kriterler.includes(id)) D.kriterler = D.kriterler.filter(x => x !== id);
+      else if (D.kriterler.length < MAKS_KRITER) D.kriterler.push(id);
+      return ciz();
+    }
+    case "kriterBitti": return git(5);
+    case "cevap": D.cevaplar[b.dataset.anahtar] = Number(b.dataset.k); return ciz();
+    case "soruGeri":
+      if (D.soru > 0) { D.soru--; return ciz(true); }
+      return git(4);
+    case "soruIleri": {
+      const C = ciftler(D.kriterler.length);
+      if (D.soru < C.length - 1) D.soru++; else D.agirlikEkrani = true;
+      return ciz(true);
+    }
+    case "sorulara": D.agirlikEkrani = false; D.soru = 0; return ciz(true);
+    case "hesapla": return hesapla();
+    case "yazdir": return window.print();
+  }
+});
+
+kok.addEventListener("change", e => {
+  const el = e.target;
+  if (el.dataset.secim) {
+    const s = D.secim;
+    const alanAd = el.dataset.secim;
+    s[alanAd] = el.value;
+    if (alanAd === "marka") { s.model = ""; s.yil = ""; s.motor = null; s.paket = null; }
+    if (alanAd === "model") { s.yil = ""; s.motor = null; s.paket = null; }
+    if (alanAd === "yil") { s.motor = null; s.paket = null; }
+    D.hata = "";
+    ciz();
+  } else if (el.dataset.alan && el.dataset.alan.startsWith("secim.")) {
+    D.secim[el.dataset.alan.slice(6)] = el.value; kaydet();
+  }
+});
+
+kok.addEventListener("input", e => {
+  const el = e.target;
+  if (el.dataset.arac) {
+    const a = D.araclar.find(x => String(x.id) === el.dataset.arac);
+    if (!a) return;
+    a[el.dataset.alan] = el.value;
+    if (el.dataset.alan === "km") {
+      // Yıllık km notunu odak kaybolmadan güncelle
+      const yer = document.getElementById("ykNot");
+      if (yer) yer.innerHTML = ykNotu(a);
+    }
+    kaydet();
+  } else if (el.dataset.yakit) {
+    D.yakit[el.dataset.yakit] = el.value; kaydet();
+  } else if (el.dataset.alan && el.dataset.alan.startsWith("secim.")) {
+    D.secim[el.dataset.alan.slice(6)] = el.value; kaydet();
+  }
+});
+
+/* Eski kayıtta adım geçersizse düzelt */
+if (!(D.adim >= 0 && D.adim < EKRANLAR.length)) D.adim = 0;
+ciz();
+</script>
+</body>
+</html>
